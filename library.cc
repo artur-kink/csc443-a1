@@ -13,7 +13,9 @@ void fixed_len_write(Record *record, void *buf) {
 void fixed_len_read(void *buf, int size, Record *record) {
     for (int i = 0; i < num_attributes; i++) {
         V attr = (V)malloc(attribute_len);
-        memcpy((void*)attr, buf + i*attribute_len, attribute_len);
+        // What about initializing to 0, do we need to do that?
+        // memset(attr, 0, attribute_len);
+        memcpy((void*)attr, (char *) buf + i*attribute_len, attribute_len);
         record->push_back(attr);
     }
 }
