@@ -22,7 +22,7 @@ int main(int argc, char** argv){
     //Create initial page
     Page* page = (Page*)malloc(sizeof(Page));;
     init_fixed_len_page(page, page_size, record_size);
-    
+    fixed_len_page_freeslots(page);
     int page_counter = 1;
     
     //Add records to pages
@@ -30,6 +30,8 @@ int main(int argc, char** argv){
         
         if(add_fixed_len_page(page, records.at(i)) == -1){
             //Write page to file.
+            fwrite(page->data, 1, page->page_size, page_file);
+            fflush(page_file);
             
             //Create new page.
             free(page);
@@ -41,6 +43,9 @@ int main(int argc, char** argv){
     }
     
     //Write final page to file.
+    fwrite(page->data, 1, page->page_size, page_file);
+    fflush(page_file);
+    fclose(page_file);
     
     //Print stats
     printf("NUMBER OF RECORDS: %d\n", records.size());
