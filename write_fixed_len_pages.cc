@@ -27,7 +27,6 @@ int main(int argc, char** argv){
     //Create initial page
     Page* page = (Page*)malloc(sizeof(Page));;
     init_fixed_len_page(page, page_size, record_size);
-    fixed_len_page_freeslots(page);
     int page_counter = 1;
     
     //Add records to pages
