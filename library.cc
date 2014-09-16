@@ -53,8 +53,10 @@ int fixed_len_page_capacity(Page *page) {
 int fixed_len_page_freeslots(Page *page) {
     int freeslots = 0;
     
+    //Get directory.
     char* directory = ((char*)page->data) + page->directory_offset;
     
+    //Loop over directory to see which records are free.
     for(int i = 0; i < fixed_len_page_capacity(page); i++){
         if(i%8 == 0)
             directory++;
@@ -72,7 +74,7 @@ int add_fixed_len_page(Page *page, Record *r) {
     //Iterate slots directory to find a free one.
     for(int i = 0; i < fixed_len_page_capacity(page); i++){
         if(i > 0 && i%8 == 0){
-            directory_offset+=1;
+            directory_offset += 1;
         }
         unsigned char directory = (unsigned char)*directory_offset;
 
@@ -82,7 +84,7 @@ int add_fixed_len_page(Page *page, Record *r) {
             
             //Update directory.
             directory |= 1 << (i%8);
-            memcpy(directory_offset, &directory, 1);  
+            memcpy(directory_offset, &directory, 1);
             return i;
         }
     }
@@ -92,13 +94,30 @@ int add_fixed_len_page(Page *page, Record *r) {
 }
 
 void write_fixed_len_page(Page *page, int slot, Record *r) {
-    // Pointer to directory slot is found.
-    // Pointer to slot is found
-    // Use fixed_len_write to write it.
-    // Mark header as 1
+    //Check that slot is in valid space.
+    if(slot >= fixed_len_page_capacity(page))
+        return;
+    
+    //Get byte position of slot in the directory.
+    unsigned char* directory_offset = ((unsigned char*)page->data) + page->directory_offset;
+    directory_offset += slot/8;
+    
+    //Update directory, set as written.
+    unsigned char directory = (unsigned char)*directory_offset;
+    directory |= 1 << (slot%8);
+    memcpy(directory_offset, &directory, 1);
+    
+    //Write record to slot.
+    unsigned char* slot_ptr = ((unsigned char*)page->data) + page->slot_size*slot;
+    fixed_len_write(r, slot_ptr);
 }
 
 void read_fixed_len_page(Page *page, int slot, Record *r) {
-    char* slot_ptr = (char *)page->data + (page->slot_size * slot);
+    //Check that slot is in valid space.
+    if(slot >= fixed_len_page_capacity(page))
+        return;
+    
+    //It is up to the caller to make sure the requested slot is actually not empty.
+    char* slot_ptr = (char*)page->data + (page->slot_size * slot);
     fixed_len_read(slot_ptr, page->slot_size, r);
 }
