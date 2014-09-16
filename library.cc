@@ -45,4 +45,19 @@ int fixed_len_page_freeslots(Page *page) {
     return 0;
 }
 
+int add_fixed_len_page(Page *page, Record *r) {
+    // Same as fixed_len_page_freeslots
+    // 1. go to header
+    if (fixed_len_page_freeslots(page) == 0) {
+        return -1;
+    }
+    // 2. loop over header till 0 is found.
+    // 3. calculate spot to naviagte to based on index in directory
+    // 4. go to record slot
+    // 5. fixed_len_write in that slot
+    // 6. return 0
+    // 7. if we somehow looped over them all and found no slot, return -1
+    return -1;
+}
+
 
