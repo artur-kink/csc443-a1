@@ -1,4 +1,7 @@
 #include <vector>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 typedef const char* V;
 typedef std::vector<V> Record;
@@ -9,6 +12,10 @@ typedef struct {
     int slot_size;
 } Page;
 
+typedef struct {
+    FILE *file_ptr;
+    int page_size;
+} Heapfile;
 
 #define num_attributes 100
 #define attribute_len 10
@@ -29,9 +36,6 @@ void fixed_len_write(Record *record, void *buf);
  * stores the record in `record`.
  */
 void fixed_len_read(void *buf, int size, Record *record);
-
-
-
 
 /**
  * Initializes a page using the given slot size
