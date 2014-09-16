@@ -29,27 +29,31 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     //Number of slot directories that fit into unslottable space.
     int unslottable_directories = (page_size%slot_size)*8;
     
+    //Use record slots for directory if we do not have enough free space
+    //for the directory.
     int directories_per_slot = page_size*8;
     int num_directory_slots = 0;
     while(num_directory_slots*directories_per_slot + unslottable_directories < page_size/slot_size - num_directory_slots){
         num_directory_slots++;
     }
-    page->directory_slots = num_directory_slots;
+    //Calculate the byte offset where the directory starts.
+    page->directory_offset = (page_size/slot_size - num_directory_slots)*page->slot_size;
     
     //Set directory to empty.
-    memset((unsigned char*)page->data + (page_size/slot_size - num_directory_slots)*page->slot_size, 0, slot_size*num_directory_slots + page_size%slot_size);
-    printf("Page Initialized. Page size: %d, Slot size: %d, Slots in page: %d, Directory Bytes: %d, Directory slots: %d\n", page_size, slot_size, page_size/slot_size - num_directory_slots, slot_size*num_directory_slots + page_size%slot_size, num_directory_slots);
+    memset((unsigned char*)page->data + page->directory_offset, 0, slot_size*num_directory_slots + page_size%slot_size);
+    printf("Page Initialized. Page size: %d, Slot size: %d, Slots in page: %d, Directory Bytes: %d, Directory slots: %d\n",
+        page_size, slot_size, page_size/slot_size - num_directory_slots, slot_size*num_directory_slots + page_size%slot_size, num_directory_slots);
     
 }
 
 int fixed_len_page_capacity(Page *page) {
-    return page->page_size/page->slot_size - page->directory_slots;
+    return (page->directory_offset)/page->slot_size;
 }
 
 int fixed_len_page_freeslots(Page *page) {
     int freeslots = 0;
     
-    char* directory = ((char*)page->data) + (page->page_size/page->slot_size - page->directory_slots)*page->slot_size;
+    char* directory = ((char*)page->data) + page->directory_offset;
     
     for(int i = 0; i < fixed_len_page_capacity(page); i++){
         if(i%8 == 0)
@@ -63,7 +67,7 @@ int fixed_len_page_freeslots(Page *page) {
 }
 
 int add_fixed_len_page(Page *page, Record *r) {
-    unsigned char* directory_offset = ((unsigned char*)page->data) + (page->page_size/page->slot_size - page->directory_slots)*page->slot_size;
+    unsigned char* directory_offset = ((unsigned char*)page->data) + page->directory_offset;
 
     //Iterate slots directory to find a free one.
     for(int i = 0; i < fixed_len_page_capacity(page); i++){

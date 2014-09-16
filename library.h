@@ -14,7 +14,7 @@ typedef struct {
     void *data;
     int page_size;
     int slot_size;
-    int directory_slots;
+    int directory_offset;
 } Page;
 
 #define num_attributes 100

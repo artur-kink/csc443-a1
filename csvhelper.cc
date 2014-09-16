@@ -13,16 +13,21 @@ void read_records(const char* file, std::vector<Record*>* records){
     FILE* csvfile = fopen(file, "r");
     
     while(!feof(csvfile)){
+        //Initialize new record.
         Record* record = new Record;
         int i = 0;
+        //Read all attributes into record.
         for(i = 0; i < num_attributes; i++){
             char* attribute = (char*)malloc(attribute_len);
             if(fread(attribute, attribute_len, 1, csvfile) == 0)
                 break;
+            
+            //Skip comma and newline
             fgetc(csvfile);
             record->push_back(attribute);
         }
         
+        //If we read the correct number of attributes, add record to records list.
         if(i == num_attributes){
             records->push_back(record);
         }
