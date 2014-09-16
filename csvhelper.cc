@@ -1,5 +1,14 @@
 #include "csvhelper.h"
 
+void print_record(Record* record){
+    //Iterate all records and print the 10 bytes as characters.
+    for(int i = 0; i < record->size()-1; i++){
+        printf("%.10s,", record->at(i));
+    }
+    //Print the last variable with no trailing comma.
+    printf("%.10s\n", record->at(record->size()-1));
+}
+
 void read_records(const char* file, std::vector<Record*>* records){
     FILE* csvfile = fopen(file, "r");
     

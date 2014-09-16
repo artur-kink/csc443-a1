@@ -3,12 +3,6 @@
 
 #include <stdio.h>
 
-void print_record(Record* record){
-    for(int i = 0; i < record->size(); i++){
-        printf("%.10s ", record->at(i));
-    }
-}
-
 int main(int argc, char** argv){
     if(argc == 0)
         return 1;

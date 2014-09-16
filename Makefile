@@ -14,7 +14,7 @@ csvhelper: csvhelper.o
 write_fixed_len_pages: write_fixed_len_pages.cc library.o csvhelper.o
 	$(CC) -o $@ $< library.o csvhelper.o
 	
-read_fixed_len_page: read_fixed_len_pages.cc library.o csvhelper.o
+read_fixed_len_page: read_fixed_len_page.cc library.o csvhelper.o
 	$(CC) -o $@ $< library.o csvhelper.o
 
 csv2heapfile: csv2heapfile.cc csvhelper.o library.o
