@@ -36,3 +36,13 @@ int fixed_len_page_capacity(Page *page) {
     return floor((page->page_size)/(page->slot_size));
 }
 
+int fixed_len_page_freeslots(Page *page) {
+    // Same issue as init.
+    // 1 .Navigate to end of Directory
+    // 2. Loop over fixed_len_page_capcity number of times
+    // 3. count those in the loop that are set as 0
+    // 4 return that number
+    return 0;
+}
+
+
