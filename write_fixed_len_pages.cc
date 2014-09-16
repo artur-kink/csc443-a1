@@ -1,5 +1,6 @@
 #include "library.h"
 #include "csvhelper.h"
+#include <sys/timeb.h>
 
 int main(int argc, char** argv){
     
@@ -18,6 +19,10 @@ int main(int argc, char** argv){
     //Get records
     std::vector<Record*> records;
     read_records(argv[1], &records);
+    
+    struct timeb t;
+    ftime(&t);
+    long start_ms = t.time * 1000 + t.millitm;
     
     //Create initial page
     Page* page = (Page*)malloc(sizeof(Page));;
@@ -47,8 +52,11 @@ int main(int argc, char** argv){
     fflush(page_file);
     fclose(page_file);
     
+    ftime(&t);
+    long end_ms = t.time * 1000 + t.millitm;
+    
     //Print stats
     printf("NUMBER OF RECORDS: %d\n", records.size());
     printf("NUMBER OF PAGES: %d\n", page_counter);
-    printf("TIME: %d\n", 0);
+    printf("TIME: %d\n", end_ms - start_ms);
 }

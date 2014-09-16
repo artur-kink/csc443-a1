@@ -25,9 +25,13 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     page->data = malloc(page_size);
 
     // Create directory
+    
+    //Number of slot directories that fit into unslottable space.
+    int unslottable_directories = (page_size%slot_size)*8;
+    
     int directories_per_slot = page_size*8;
     int num_directory_slots = 0;
-    while(num_directory_slots*directories_per_slot < page_size/slot_size - num_directory_slots){
+    while(num_directory_slots*directories_per_slot + unslottable_directories < page_size/slot_size - num_directory_slots){
         num_directory_slots++;
     }
     page->directory_slots = num_directory_slots;
@@ -55,9 +59,7 @@ int fixed_len_page_freeslots(Page *page) {
         if((int)(*directory) >> (i%8) == 0){
             freeslots++;
         }
-        
     }
-    printf("Free slots: %d\n", freeslots);
     return freeslots;
 }
 
@@ -71,8 +73,6 @@ int add_fixed_len_page(Page *page, Record *r) {
         int directory = (int)*directory_offset;
         
         if(directory >> (i%8) == 0){
-            printf("Found free slot.\n");
-            
             //Write record to page.
             fixed_len_write(r, ((char*)page->data) + i*page->slot_size);
             
