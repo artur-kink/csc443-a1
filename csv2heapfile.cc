@@ -1,4 +1,5 @@
 #include "library.h"
+#include "csvhelper.h"
 
 #include <stdio.h>
 
@@ -14,25 +15,8 @@ int main(int argc, char** argv){
     
     printf("Opening %s\n", argv[1]);
     
-    FILE* csvfile = fopen(argv[1], "r");
-
     std::vector<Record*> records;
-    
-    while(!feof(csvfile)){
-        Record* record = new Record;
-        int i = 0;
-        for(i = 0; i < num_attributes; i++){
-            char* attribute = (char*)malloc(attribute_len);
-            if(fread(attribute, attribute_len, 1, csvfile) == 0)
-                break;
-            fgetc(csvfile);
-            record->push_back(attribute);
-        }
-        
-        if(i == num_attributes){
-            records.push_back(record);
-        }
-    }
+    read_records(argv[1], &records);
     
     for(int i = 0; i < records.size(); i++){
         printf("Record %d: ", i);

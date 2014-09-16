@@ -1,3 +1,6 @@
+#ifndef _DBLIBRARY_
+#define _DBLIBRARY_
+
 #include <vector>
 #include <string.h>
 #include <stdlib.h>
@@ -102,4 +105,6 @@ class RecordIterator {
     RecordIterator(Heapfile *heapfile);
     Record next();
     bool hasNext();
-}
+};
+
+#endif

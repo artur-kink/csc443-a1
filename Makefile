@@ -6,8 +6,19 @@ library.o: library.cc library.h
 
 library: library.o
 
-csv2heapfile: csv2heapfile.cc library.o
-	$(CC) -o $@ $< library.o
+csvhelper.o: csvhelper.cc csvhelper.h
+	$(CC) -o $@ -c $<
+
+csvhelper: csvhelper.o
+
+write_fixed_len_pages: write_fixed_len_pages.cc library.o csvhelper.o
+	$(CC) -o $@ $< library.o csvhelper.o
+	
+read_fixed_len_page: read_fixed_len_pages.cc library.o csvhelper.o
+	$(CC) -o $@ $< library.o csvhelper.o
+
+csv2heapfile: csv2heapfile.cc csvhelper.o library.o
+	$(CC) -o $@ $< library.o csvhelper.o
      
 scan: scan.cc library.o
 	$(CC) -o $@ $< library.o
