@@ -27,7 +27,7 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     // zero initializing the array as calloc does, yay I'm learning something C, seems relevant to out interests.
     page->data = calloc(page_size, sizeof(char));
 
-    //Header
+    // Directory
     // Find where header is and use the 16 bits (or however many records we are storing) so we can use them as a bitmap
 }
 
