@@ -21,17 +21,33 @@ typedef struct {
 #define attribute_len 10
 #define record_size num_attributes*attribute_len
 
-typedef struct {
-    FILE *file_ptr;
-    int page_size;
-} Heapfile;
-
 typedef int PageID;
 
 typedef struct {
-    int page_id;
+    PageID page_id;
     int slot;
 } RecordID;
+
+typedef struct PageEntry {
+    int page_offset;
+    int freespace;
+
+    struct PageEntry* next;
+
+    PageEntry(int po, int space, struct PageEntry* n) :
+            page_offset(po),
+            freespace(space),
+            next(n){};
+
+} PageEntry;
+
+typedef struct {
+    FILE *file_ptr;
+    int page_size;
+
+    int num_pages;
+    PageEntry* directory;
+} Heapfile;
 
 /**
  * Compute the number of bytes required to serialize record

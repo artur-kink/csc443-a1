@@ -37,7 +37,7 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     page->directory_slots = num_directory_slots;
     
     //Set directory to empty.
-    memset((unsigned char*)page->data + (page_size/slot_size - num_directory_slots)*page->slot_size, 0, slot_size*num_directory_slots + page_size%slot_size);
+    memset((unsigned char*)page->data + fixed_len_page_capacity(page)*page->slot_size, 0, slot_size*num_directory_slots + page_size%slot_size);
     printf("Page Initialized. Page size: %d, Slot size: %d, Slots in page: %d, Directory Bytes: %d, Directory slots: %d\n", page_size, slot_size, page_size/slot_size - num_directory_slots, slot_size*num_directory_slots + page_size%slot_size, num_directory_slots);
     
 }
@@ -48,10 +48,11 @@ int fixed_len_page_capacity(Page *page) {
 
 int fixed_len_page_freeslots(Page *page) {
     int freeslots = 0;
+    int page_capacity = fixed_len_page_capacity(page);
     
-    char* directory = ((char*)page->data) + (page->page_size/page->slot_size - page->directory_slots)*page->slot_size;
+    char* directory = ((char*)page->data) + page_capacity*page->slot_size;
     
-    for(int i = 0; i < fixed_len_page_capacity(page); i++){
+    for(int i = 0; i < page_capacity; i++){
         if(i%8 == 0)
             directory++;
         
@@ -63,14 +64,15 @@ int fixed_len_page_freeslots(Page *page) {
 }
 
 int add_fixed_len_page(Page *page, Record *r) {
-    unsigned char* directory_offset = ((unsigned char*)page->data) + (page->page_size/page->slot_size - page->directory_slots)*page->slot_size;
+    int page_capacity = fixed_len_page_capacity(page);
+    unsigned char* directory_offset = ((unsigned char*)page->data) + page_capacity*page->slot_size;
 
     //Iterate slots directory to find a free one.
-    for(int i = 0; i < fixed_len_page_capacity(page); i++){
+    for(int i = 0; i < page_capacity; i++){
         if(i > 0 && i%8 == 0){
             directory_offset+=1;
         }
-        unsigned char directory = (unsigned char)*directory_offset;
+        unsigned char directory = *directory_offset;
 
         if(directory >> (i%8) == 0){
             //Write record to page.
@@ -97,4 +99,53 @@ void write_fixed_len_page(Page *page, int slot, Record *r) {
 void read_fixed_len_page(Page *page, int slot, Record *r) {
     char* slot_ptr = (char *)page->data + (page->slot_size * slot);
     fixed_len_read(slot_ptr, page->slot_size, r);
+}
+
+void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
+    heapfile->page_size = page_size;
+    heapfile->file_ptr = file;
+
+    heapfile->num_pages = 0;
+    heapfile->directory = NULL;
+
+    // TODO: How does the directory map back to actual pages?
+}
+
+
+PageID alloc_page(Heapfile *heapfile) {
+    Page* new_page = new Page;
+    init_fixed_len_page(new_page, heapfile->page_size, sizeof(int));
+
+    PageEntry* new_entry = new PageEntry(
+            heapfile->num_pages * heapfile->page_size,
+            fixed_len_page_capacity(new_page),
+            NULL
+    );
+
+    // add page info to directory
+    if (heapfile->num_pages == 0) {
+        heapfile->directory = new_entry;
+    } else {
+        PageEntry* cur_dir = heapfile->directory;
+        while ((cur_dir->next) != NULL)
+            cur_dir = cur_dir->next;
+
+        cur_dir->next = new_entry;
+    }
+
+    // TODO: What should we write to the file at this point?
+
+    return heapfile->num_pages++;
+}
+
+void read_page(Heapfile *heapfile, PageID pid, Page *page) {
+//    for (int i = 0; i < pid; i++) {
+//        fseek(heapfile->file_ptr, , SEEK_CUR);
+//    }
+}
+
+void write_page(Page *page, Heapfile *heapfile, PageID pid) {
+    int num_pages_to_seek = alloc_page(heapfile);
+
+
 }
