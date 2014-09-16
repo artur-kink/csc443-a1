@@ -60,4 +60,16 @@ int add_fixed_len_page(Page *page, Record *r) {
     return -1;
 }
 
+void write_fixed_len_page(Page *page, int slot, Record *r) {
+    // Pointer to directory slot is found.
+    // Pointer to slot is found
+    // Use fixed_len_write to write it.
+    // Mark header as 1
+}
+
+void read_fixed_len_page(Page *page, int slot, Record *r) {
+    char* slot_ptr = (char *)page->data + (page->slot_size * slot);
+    fixed_len_read(slot_ptr, page->slot_size, r);
+}
+
 
