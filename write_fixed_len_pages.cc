@@ -2,6 +2,11 @@
 #include "csvhelper.h"
 #include <sys/timeb.h>
 
+/**
+ * Takes a csv file, reads all the values into records.
+ * The records are all added to pages of size page_size.
+ * Pages are written to page_file as they fill up.
+ */
 int main(int argc, char** argv){
     
     //Make sure all args given.
@@ -19,7 +24,9 @@ int main(int argc, char** argv){
     //Get records
     std::vector<Record*> records;
     read_records(argv[1], &records);
-    
+   
+    //Record start time of program.
+    //We do not include parsing of the csv because that is irrelevant to our metrics.
     struct timeb t;
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
@@ -38,8 +45,7 @@ int main(int argc, char** argv){
             fflush(page_file);
             
             //Create new page.
-            free(page);
-            page = (Page*)malloc(sizeof(Page));;
+            free_fixed_len_page(page);
             init_fixed_len_page(page, page_size, record_size);
             add_fixed_len_page(page, records.at(i));
             page_counter++;
@@ -51,10 +57,15 @@ int main(int argc, char** argv){
     fflush(page_file);
     fclose(page_file);
     
+    //Release page memory.
+    free_fixed_len_page(page);
+    free(page);
+    
+    //Calculate program end time.
     ftime(&t);
     long end_ms = t.time * 1000 + t.millitm;
     
-    //Print stats
+    //Print metrics.
     printf("NUMBER OF RECORDS: %d\n", records.size());
     printf("NUMBER OF PAGES: %d\n", page_counter);
     printf("TIME: %d\n", end_ms - start_ms);
