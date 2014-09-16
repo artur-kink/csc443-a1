@@ -78,6 +78,11 @@ void fixed_len_read(void *buf, int size, Record *record);
 void init_fixed_len_page(Page *page, int page_size, int slot_size);
 
 /**
+ * Release an allocated page from memory.
+ */
+void free_fixed_len_page(Page* page);
+
+/**
  * Calculates the maximal number of records that fit in a page
  */
 int fixed_len_page_capacity(Page *page);

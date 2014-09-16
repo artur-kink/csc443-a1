@@ -45,8 +45,7 @@ int main(int argc, char** argv){
             fflush(page_file);
             
             //Create new page.
-            free(page);
-            page = (Page*)malloc(sizeof(Page));;
+            free_fixed_len_page(page);
             init_fixed_len_page(page, page_size, record_size);
             add_fixed_len_page(page, records.at(i));
             page_counter++;
@@ -57,6 +56,10 @@ int main(int argc, char** argv){
     fwrite(page->data, 1, page->page_size, page_file);
     fflush(page_file);
     fclose(page_file);
+    
+    //Release page memory.
+    free_fixed_len_page(page);
+    free(page);
     
     //Calculate program end time.
     ftime(&t);
