@@ -31,3 +31,8 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     // Find where header is and use the 16 bits (or however many records we are storing) so we can use them as a bitmap
 }
 
+int fixed_len_page_capacity(Page *page) {
+    // Unsure if correct, depends how pages work including the directory....but the simple and wrong answer would be:
+    return floor((page->page_size)/(page->slot_size));
+}
+
