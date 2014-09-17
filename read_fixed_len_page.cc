@@ -1,5 +1,6 @@
 #include "library.h"
 #include "csvhelper.h"
+#include <sys/timeb.h>
 
 /**
  * Reads page_file that was generated using write_fixed_len_pages.
@@ -15,6 +16,11 @@ int main(int argc, char** argv){
     //Parse arguments.
     FILE* page_file = fopen(argv[1], "r");
     int page_size = atoi(argv[2]);
+    
+    //Record program start time.
+    struct timeb t;
+    ftime(&t);
+    long start_ms = t.time * 1000 + t.millitm;
     
     Page* page = new Page;
     //Read all pages in file.
@@ -54,4 +60,9 @@ int main(int argc, char** argv){
         free_fixed_len_page(page);
     }
     free(page);
+    
+    //Calculate program end time.
+    ftime(&t);
+    long end_ms = t.time * 1000 + t.millitm;
+    printf("TIME: %d\n", end_ms - start_ms);
 }

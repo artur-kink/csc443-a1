@@ -1,5 +1,7 @@
 # Makefile
 CC = g++
+
+all: write_fixed_len_pages read_fixed_len_page
      
 library.o: library.cc library.h
 	$(CC) -o $@ -c $<
