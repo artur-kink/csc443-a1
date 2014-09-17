@@ -131,46 +131,22 @@ void read_fixed_len_page(Page *page, int slot, Record *r) {
 void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
     heapfile->page_size = page_size;
     heapfile->file_ptr = file;
-
-    heapfile->num_pages = 0;
-    heapfile->directory = NULL;
-
-    // TODO: How does the directory map back to actual pages?
-    // The diagrams from the book seem to imply that the pages
-    // themselves are linked to their directory entries, but if
-    // that's the case then why do we need to maintain an offset
-    // and freespace amount on the directory entry at all?
 }
 
 
 PageID alloc_page(Heapfile *heapfile) {
     Page* new_page = new Page;
-    init_fixed_len_page(new_page, heapfile->page_size, sizeof(int));
-
-    PageEntry* new_entry = new PageEntry(
-            heapfile->num_pages * heapfile->page_size,
-            fixed_len_page_capacity(new_page),
-            NULL
-    );
-
-    // add page info to directory
-    if (heapfile->num_pages == 0) {
-        heapfile->directory = new_entry;
-    } else {
-        PageEntry* cur_dir = heapfile->directory;
-        while ((cur_dir->next) != NULL)
-            cur_dir = cur_dir->next;
-
-        cur_dir->next = new_entry;
-    }
-
-    // TODO: What should we write to the file at this point?
-
-    return heapfile->num_pages++;
+    init_fixed_len_page(new_page, heapfile->page_size, record_size);
+    
+    //Find end of heapfile.
+    fseek(heapfile->file_ptr, 0, SEEK_END);
+    fwrite(new_page->data, new_page->page_size, 1, heapfile->file_ptr);
 }
 
 void read_page(Heapfile *heapfile, PageID pid, Page *page) {
-
+    init_fixed_len_page(page, heapfile->page_size, record_size);
+    fseek(heapfile->file_ptr, heapfile->page_size * pid, SEEK_SET);
+    fread(page->data, page->page_size, 1, heapfile->file_ptr);
 }
 
 void write_page(Page *page, Heapfile *heapfile, PageID pid) {

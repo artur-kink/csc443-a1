@@ -67,9 +67,6 @@ typedef struct PageEntry {
 typedef struct {
     FILE *file_ptr;
     int page_size;
-
-    int num_pages;
-    PageEntry* directory;
 } Heapfile;
 
 /**

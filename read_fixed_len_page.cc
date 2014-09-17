@@ -16,11 +16,11 @@ int main(int argc, char** argv){
     FILE* page_file = fopen(argv[1], "r");
     int page_size = atoi(argv[2]);
     
+    Page* page = new Page;
     //Read all pages in file.
     while(!feof(page_file)){
         
         //Initialize a page to read into.
-        Page* page = new Page;
         init_fixed_len_page(page, page_size, record_size);
         
         //If a page could not be read were done.
@@ -51,6 +51,7 @@ int main(int argc, char** argv){
             
             }
         }
-        //Add code to free pages.
+        free_fixed_len_page(page);
     }
+    free(page);
 }
