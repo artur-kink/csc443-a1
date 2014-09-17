@@ -1,7 +1,8 @@
 # Makefile
 CC = g++
+RM = rm
 
-all: write_fixed_len_pages read_fixed_len_page
+all: write_fixed_len_pages read_fixed_len_page csv2heapfile
      
 library.o: library.cc library.h
 	$(CC) -o $@ -c $<
@@ -45,3 +46,6 @@ select2: select2.cc library.o
      
 select3: select3.cc library.o
 	$(CC) -o $@ $< library.o
+
+clean:
+	$(RM) *.o

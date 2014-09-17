@@ -16,7 +16,7 @@ int main(int argc, char** argv){
     }
     
     //Open page file.
-    FILE* page_file = fopen(argv[2], "w");
+    FILE* page_file = fopen(argv[2], "w+b");
     
     int page_size = atoi(argv[3]);
     printf("Page size: %d\n", page_size);

@@ -133,14 +133,15 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
     heapfile->file_ptr = file;
 }
 
-
 PageID alloc_page(Heapfile *heapfile) {
-    Page* new_page = new Page;
+    Page* new_page = (Page*)malloc(sizeof(Page));
     init_fixed_len_page(new_page, heapfile->page_size, record_size);
     
     //Find end of heapfile.
     fseek(heapfile->file_ptr, 0, SEEK_END);
     fwrite(new_page->data, new_page->page_size, 1, heapfile->file_ptr);
+    fflush(heapfile->file_ptr);
+    return 0;
 }
 
 void read_page(Heapfile *heapfile, PageID pid, Page *page) {
@@ -151,4 +152,5 @@ void read_page(Heapfile *heapfile, PageID pid, Page *page) {
 
 void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 
+    fflush(heapfile->file_ptr);
 }

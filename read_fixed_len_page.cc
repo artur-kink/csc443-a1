@@ -14,7 +14,7 @@ int main(int argc, char** argv){
     }
     
     //Parse arguments.
-    FILE* page_file = fopen(argv[1], "r");
+    FILE* page_file = fopen(argv[1], "rb");
     int page_size = atoi(argv[2]);
     
     //Record program start time.
