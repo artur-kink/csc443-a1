@@ -150,8 +150,8 @@ private:
     /** Id of current page. */
     PageID current_page_id;
     
-    /** The next available record id.*/
-    RecordID next_record;
+    /** The current record directory slot being checked */
+    int current_slot;
     
 public:
     

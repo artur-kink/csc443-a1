@@ -95,7 +95,7 @@ void write_fixed_len_page(Page *page, int slot, Record *r) {
         return;
 
     //Get byte position of slot in the directory.
-    unsigned char* directory_offset = ((unsigned char*)page->data) +fixed_len_page_directory_offset(page);
+    unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
     directory_offset += slot/8;
 
     //Update directory, set as written.
@@ -136,6 +136,7 @@ PageID alloc_page(Heapfile *heapfile) {
 
 void read_page(Heapfile *heapfile, PageID pid, Page *page) {
     init_fixed_len_page(page, heapfile->page_size, record_size);
+
     fseek(heapfile->file_ptr, heapfile->page_size * pid, SEEK_SET);
     fread(page->data, page->page_size, 1, heapfile->file_ptr);
 }
@@ -147,19 +148,51 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 }
 
 
-RecordIterator::RecordIterator(Heapfile *heapfile){
-    heap = heapfile;
+RecordIterator::RecordIterator(Heapfile *heapfile) {
+    this->heap = heapfile;
     
     //Start at first page.
-    current_page_id = 0;
-    current_page = (Page*)malloc(sizeof(Page));
+    this->current_page_id = 0;
+    this->current_page = (Page*)malloc(sizeof(Page));
+    this->current_slot = 0;
+
     read_page(heap, current_page_id, current_page);
 }
 
-Record RecordIterator::next(){
-    
+Record RecordIterator::next() {
+    Record record;
+    read_fixed_len_page(this->current_page, this->current_slot, &record);
+
+    // go to the next slot for this page, so we don't continuously read
+    // the same record over and over again
+    this->current_slot++;
+
+    return record;
 }
 
-bool RecordIterator::hasNext(){
+bool RecordIterator::hasNext() {
+    while (!feof(this->heap->file_ptr)) {
+
+        unsigned char *directory_offset = ((unsigned char *) this->current_page->data) + fixed_len_page_directory_offset(this->current_page);
+
+        for (; this->current_slot < fixed_len_page_capacity(this->current_page); this->current_slot++) {
+            if (this->current_slot > 0 && this->current_slot % 8 == 0) {
+                directory_offset += 1;
+            }
+
+            //Retrieve record from slot if its marked in the directory.
+            unsigned char directory = *directory_offset;
+
+            if (directory >> (this->current_slot % 8) & 0x01) {
+                return true;
+            }
+
+        }
+
+        this->current_page_id++;
+        this->current_slot = 0;
+        read_page(this->heap, this->current_page_id, this->current_page);
+    }
+
     return false;
 }
