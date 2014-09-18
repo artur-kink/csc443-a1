@@ -149,6 +149,11 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 
 RecordIterator::RecordIterator(Heapfile *heapfile){
     heap = heapfile;
+    
+    //Start at first page.
+    current_page_id = 0;
+    current_page = (Page*)malloc(sizeof(Page));
+    read_page(heap, current_page_id, current_page);
 }
 
 Record RecordIterator::next(){

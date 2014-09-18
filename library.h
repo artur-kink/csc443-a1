@@ -143,7 +143,18 @@ class RecordIterator {
 private:
     /** The heap being accessed by this iterator. */
     Heapfile* heap;
+    
+    /** The page where the next record is stored. */
+    Page* current_page;
+    
+    /** Id of current page. */
+    PageID current_page_id;
+    
+    /** The next available record id.*/
+    RecordID next_record;
+    
 public:
+    
     RecordIterator(Heapfile *heapfile);
     Record next();
     bool hasNext();
