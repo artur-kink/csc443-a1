@@ -158,6 +158,8 @@ public:
     RecordIterator(Heapfile *heapfile);
     Record next();
     bool hasNext();
+    
+    ~RecordIterator();
 };
 
 #endif

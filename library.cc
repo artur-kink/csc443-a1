@@ -177,7 +177,7 @@ Record RecordIterator::next() {
 bool RecordIterator::hasNext() {
     while (!feof(this->heap->file_ptr)) {
 
-        unsigned char *directory_offset = ((unsigned char *) this->current_page->data) + fixed_len_page_directory_offset(this->current_page);
+        unsigned char *directory_offset = ((unsigned char *) this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + ((current_slot-1)/8);
 
         //Find next available record.
         for (; this->current_slot < fixed_len_page_capacity(this->current_page); this->current_slot++) {
@@ -199,4 +199,13 @@ bool RecordIterator::hasNext() {
     }
 
     return false;
+}
+
+RecordIterator::~RecordIterator(){
+    //Free the current page memory.
+    free_fixed_len_page(current_page);
+    free(current_page);
+    
+    heap = 0;
+    current_page = 0;
 }
