@@ -46,7 +46,7 @@ int fixed_len_page_directory_offset(Page *page) {
     // The number of records is the floor of the size of the page used for slotting
     // divided by the size of the slot plus one (for the 1 or 0 in the directory).
     // We use that to calculate the offset by multiplying by slot size.
-    return page->page_size - floor((page->page_size*8)/(page->slot_size*8 + 1))*page->slot_size;
+    return page->page_size - (floor((page->page_size*8)/(page->slot_size*8 + 1))*page->slot_size)/8;
 }
 
 int fixed_len_page_freeslots(Page *page) {
