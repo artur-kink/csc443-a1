@@ -9,7 +9,7 @@
 
 typedef const char* V;
 
-/** 
+/**
  * A basic record.
  * For the purposes of this assignment it has a fixed size of num_attributes
  * attributes each attribute_len number of bytes.
@@ -22,7 +22,7 @@ typedef std::vector<V> Record;
  * The record directory is a bitmap that starts at directory_offset.
  * A value of 0 at bit n means the n'th slot is empty, it has no record.
  * A value of 1 at bit n means the n'th slot has a record in it.
- * 
+ *
  * The directory_offset is calculated when init_fixed_len_page is called.
  * It is completely dependent on page_size and slot_size.
  */
@@ -99,6 +99,11 @@ void free_fixed_len_page(Page* page);
  * Calculates the maximal number of records that fit in a page
  */
 int fixed_len_page_capacity(Page *page);
+
+/**
+ * Calculates the offset of the directory on a page
+ */
+int fixed_len_page_directory_offset(Page *page);
 
 /*
  * Calculate the free space (number of free slots) in the page
