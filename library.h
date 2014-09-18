@@ -33,8 +33,6 @@ typedef struct {
     int page_size;
     /** Fixed size of 1 record slot. */
     int slot_size;
-    /** Byte offset from data where the record directory starts. */
-    int directory_offset;
 } Page;
 
 /** The fixed number of attributes in a record. */

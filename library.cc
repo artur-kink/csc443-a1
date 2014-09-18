@@ -43,7 +43,7 @@ int fixed_len_page_capacity(Page *page) {
 
 int fixed_len_page_directory_offset(Page *page) {
     // Calculate the byte offset where the directory starts.
-    return page->page_size - ceil(((float)page->page_size/(float)page->slot_size)/8);
+    return page->page_size - ceil((floor((float)page->page_size/(float)page->slot_size))/8);
 }
 
 int fixed_len_page_freeslots(Page *page) {

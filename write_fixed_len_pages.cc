@@ -19,7 +19,6 @@ int main(int argc, char** argv){
     FILE* page_file = fopen(argv[2], "w+b");
     
     int page_size = atoi(argv[3]);
-    printf("Page size: %d\n", page_size);
     
     //Get records
     std::vector<Record*> records;

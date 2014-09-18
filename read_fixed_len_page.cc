@@ -35,7 +35,7 @@ int main(int argc, char** argv){
         }
         else{
             
-            unsigned char* directory_offset = ((unsigned char*)page->data) + page->directory_offset;
+            unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
             
             int record_count = 0;
             
