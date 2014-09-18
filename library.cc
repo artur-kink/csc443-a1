@@ -27,7 +27,7 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     // Create directory
 
     //Calculate the byte offset where the directory starts.
-    page->directory_offset = (fixed_len_page_capacity(page)*page->slot_size) + sizeof(*page);
+    page->directory_offset = page_size - fixed_len_page_capacity(page);
 
     //Set directory to empty.
     memset((unsigned char*)page->data + page->directory_offset, 0, slot_size*(fixed_len_page_capacity(page)) + page_size%slot_size);
