@@ -2,7 +2,7 @@
 CC = g++
 RM = rm
 
-all: write_fixed_len_pages read_fixed_len_page csv2heapfile
+all: write_fixed_len_pages read_fixed_len_page csv2heapfile scan
      
 library.o: library.cc library.h
 	$(CC) -o $@ -c $<
