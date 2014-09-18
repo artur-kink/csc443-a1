@@ -130,7 +130,8 @@ PageID alloc_page(Heapfile *heapfile) {
     fwrite(new_page->data, new_page->page_size, 1, heapfile->file_ptr);
     fflush(heapfile->file_ptr);
     free(new_page);
-    
+
+    //Calculate the id of new allocated page.
     fpos_t cur_pos;
     fgetpos(heapfile->file_ptr, &cur_pos);
     return cur_pos.__pos/heapfile->page_size - 1;

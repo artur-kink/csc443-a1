@@ -4,41 +4,50 @@
 #include <sys/timeb.h>
 #include <stdio.h>
 
+/**
+ * Takes a csv file and converts it to a heap file with given page sizes.
+ */
 int main(int argc, char** argv){
+    //Make sure all args are provided.
     if(argc != 4){
         printf("Usage: csv2heapfile <csv_file> <heapfile> <page_size>\n");
         return 1;
     }
 
-    printf("Opening %s\n", argv[1]);
-
+    //Load records from csv.
     std::vector<Record*> records;
     read_records(argv[1], &records);
-
+    if(records.size() == 0){
+        printf("No records in csv.\n");
+        return 2;
+    }
+    
     //Record start time of program.
     //We do not include parsing of the csv because that is irrelevant to our metrics.
     struct timeb t;
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
 
-    printf("Initializing Heapfile\n");
-
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
+    //Open heap file where heap is stored.
     FILE* heap_file = fopen(argv[2], "w+b");
+    if(!heap_file){
+        printf("Failed to open heap file to write to: %s\n", argv[2]);
+        return 3;
+    }
     init_heapfile(heap, atoi(argv[3]), heap_file);
 
-    printf("Initializing Page\n");
-
+    //Initialize first page.
     PageID page_id = alloc_page(heap);
     Page* page = (Page*)malloc(sizeof(Page));
     read_page(heap, page_id, page);
 
-    printf("Adding records to Page\n");
-
+    //Loop all records and add them to heap.
     for(int i = 0; i < records.size(); i++){
         printf("Record %d: ", i);
         print_record(records.at(i));
 
+        //If page is full, create new page in heap.
         if(add_fixed_len_page(page, records.at(i)) == -1){
             //Write page back to heap.
             write_page(page, heap, page_id);
@@ -49,10 +58,13 @@ int main(int argc, char** argv){
             add_fixed_len_page(page, records.at(i));
         }
     }
+    //Write our final page to heap.
     write_page(page, heap, page_id);
 
     //Calculate program end time.
     ftime(&t);
     long end_ms = t.time * 1000 + t.millitm;
     printf("TIME: %lu\n", end_ms - start_ms);
+    
+    return 0;
 }
