@@ -15,6 +15,10 @@ int main(int argc, char** argv){
 
     //Parse arguments.
     FILE* page_file = fopen(argv[1], "rb");
+    if(!page_file){
+        printf("Failed to open page file: %s\n", argv[1]);
+        return 2;
+    }
     int page_size = atoi(argv[2]);
 
     //Record program start time.
@@ -34,7 +38,6 @@ int main(int argc, char** argv){
             break;
         }
         else{
-            printf("Read page.\n");
             unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
 
             int record_count = 0;

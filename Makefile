@@ -23,8 +23,8 @@ read_fixed_len_page: read_fixed_len_page.cc library.o csvhelper.o
 csv2heapfile: csv2heapfile.cc csvhelper.o library.o
 	$(CC) -o $@ $< library.o csvhelper.o
      
-scan: scan.cc library.o
-	$(CC) -o $@ $< library.o
+scan: scan.cc library.o csvhelper.o
+	$(CC) -o $@ $< library.o csvhelper.o
      
 insert: insert.cc library.o
 	$(CC) -o $@ $< library.o
