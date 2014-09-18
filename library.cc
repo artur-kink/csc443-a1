@@ -24,8 +24,6 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     page->slot_size = slot_size;
     page->data = malloc(page_size);
 
-    printf("Directory Offset: %d\n", fixed_len_page_directory_offset(page));
-
     // Create directory and set directory to empty.
     memset((unsigned char*)page->data + fixed_len_page_directory_offset(page), 0, page->page_size - fixed_len_page_directory_offset(page));
 }
