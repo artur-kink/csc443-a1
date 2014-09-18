@@ -129,7 +129,11 @@ PageID alloc_page(Heapfile *heapfile) {
     fseek(heapfile->file_ptr, 0, SEEK_END);
     fwrite(new_page->data, new_page->page_size, 1, heapfile->file_ptr);
     fflush(heapfile->file_ptr);
-    return 0;
+    free(new_page);
+    
+    fpos_t cur_pos;
+    fgetpos(heapfile->file_ptr, &cur_pos);
+    return cur_pos.__pos/heapfile->page_size - 1;
 }
 
 void read_page(Heapfile *heapfile, PageID pid, Page *page) {
@@ -148,6 +152,7 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 
 RecordIterator::RecordIterator(Heapfile *heapfile) {
     this->heap = heapfile;
+    fseek(heapfile->file_ptr, 0, SEEK_SET);
     
     //Start at first page.
     this->current_page_id = 0;
@@ -173,6 +178,7 @@ bool RecordIterator::hasNext() {
 
         unsigned char *directory_offset = ((unsigned char *) this->current_page->data) + fixed_len_page_directory_offset(this->current_page);
 
+        //Find next available record.
         for (; this->current_slot < fixed_len_page_capacity(this->current_page); this->current_slot++) {
             if (this->current_slot > 0 && this->current_slot % 8 == 0) {
                 directory_offset += 1;
@@ -180,11 +186,9 @@ bool RecordIterator::hasNext() {
 
             //Retrieve record from slot if its marked in the directory.
             unsigned char directory = *directory_offset;
-
             if (directory >> (this->current_slot % 8) & 0x01) {
                 return true;
             }
-
         }
 
         this->current_page_id++;
