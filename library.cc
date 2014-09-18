@@ -42,9 +42,9 @@ void free_fixed_len_page(Page* page){
 }
 
 int fixed_len_page_capacity(Page *page) {
-    // The size is the size of the page used for slotting (page size minus pointer to next page)
+    // The size is the size of the page used for slotting
     // divided by the size of the slot plus one (for the 1 or 0 in the directory)
-    return floor((page->page_size*8 - sizeof(*page))/(page->slot_size*8 + 1));
+    return floor((page->page_size*8)/(page->slot_size*8 + 1));
 }
 
 int fixed_len_page_freeslots(Page *page) {
