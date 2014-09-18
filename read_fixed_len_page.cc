@@ -67,5 +67,5 @@ int main(int argc, char** argv){
     //Calculate program end time.
     ftime(&t);
     long end_ms = t.time * 1000 + t.millitm;
-    printf("TIME: %d\n", end_ms - start_ms);
+    printf("TIME: %lu\n", end_ms - start_ms);
 }
