@@ -34,7 +34,7 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     //Set directory to empty.
     memset((unsigned char*)page->data + page->directory_offset, 0, fixed_len_page_capacity(page)*8);
     //printf("Page Initialized. Page size: %d, Slot size: %d, Slots in page: %d, Directory Bytes: %d, Directory slots: %d\n",
-    //    page_size, slot_size, page_size/slot_size - num_directory_slots, slot_size*num_directory_slots + page_size%slot_size, num_directory_slots);
+    //    page_size, slot_size, fixed_len_page_capacity(page), slot_size*fixed_len_page_capacity(page) + page_size%slot_size, fixed_len_page_capacity(page));
 }
 
 void free_fixed_len_page(Page* page){
