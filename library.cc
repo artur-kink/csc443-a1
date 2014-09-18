@@ -29,7 +29,7 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     // Calculate the byte offset where the directory starts.
     // The number of records is the size of the page used for slotting
     // divided by the size of the slot plus one (for the 1 or 0 in the directory)
-    page->directory_offset = page_size - floor((page->page_size*8)/(page->slot_size*8 + 1));
+    page->directory_offset = page_size - floor((page->page_size*8)/(page->slot_size*8 + 1))*slot_size;
 
     //Set directory to empty.
     memset((unsigned char*)page->data + page->directory_offset, 0, fixed_len_page_capacity(page));
