@@ -129,6 +129,7 @@ PageID alloc_page(Heapfile *heapfile) {
     fseek(heapfile->file_ptr, 0, SEEK_END);
     fwrite(new_page->data, new_page->page_size, 1, heapfile->file_ptr);
     fflush(heapfile->file_ptr);
+    free_fixed_len_page(new_page);
     free(new_page);
 
     //Calculate the id of new allocated page.
@@ -149,7 +150,6 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     fwrite(page->data, page->page_size, 1, heapfile->file_ptr);
     fflush(heapfile->file_ptr);
 }
-
 
 RecordIterator::RecordIterator(Heapfile *heapfile) {
     this->heap = heapfile;
@@ -194,6 +194,7 @@ bool RecordIterator::hasNext() {
 
         this->current_page_id++;
         this->current_slot = 0;
+        free_fixed_len_page(this->current_page);
         read_page(this->heap, this->current_page_id, this->current_page);
     }
 
