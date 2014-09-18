@@ -49,19 +49,9 @@ typedef struct {
     int slot;
 } RecordID;
 
-typedef struct PageEntry {
-    int page_offset;
-    int freespace;
-
-    struct PageEntry* next;
-
-    PageEntry(int po, int space, struct PageEntry* n) :
-            page_offset(po),
-            freespace(space),
-            next(n){};
-
-} PageEntry;
-
+/**
+ * A heapfile representation. Grants direct access to heapfile on disk.
+ */
 typedef struct {
     FILE *file_ptr;
     int page_size;
@@ -146,8 +136,14 @@ void read_page(Heapfile *heapfile, PageID pid, Page *page);
  */
 void write_page(Page *page, Heapfile *heapfile, PageID pid);
 
+/**
+ * Iterator to iterate over all records in a heap.
+ */
 class RecordIterator {
-    public:
+private:
+    /** The heap being accessed by this iterator. */
+    Heapfile* heap;
+public:
     RecordIterator(Heapfile *heapfile);
     Record next();
     bool hasNext();

@@ -145,3 +145,16 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     fwrite(page->data, page->page_size, 1, heapfile->file_ptr);
     fflush(heapfile->file_ptr);
 }
+
+
+RecordIterator::RecordIterator(Heapfile *heapfile){
+    heap = heapfile;
+}
+
+Record RecordIterator::next(){
+    
+}
+
+bool RecordIterator::hasNext(){
+    return false;
+}
