@@ -20,6 +20,7 @@ int main(int argc, char** argv){
     
     RecordIterator* recordi = new RecordIterator(heap);
     while(recordi->hasNext()){
-        //Print record.
+        Record next_record = recordi->next();
+        print_record(&next_record);
     }
 }
