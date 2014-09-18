@@ -1,6 +1,7 @@
 #include "library.h"
 #include "csvhelper.h"
 
+#include <sys/timeb.h>
 #include <stdio.h>
 
 int main(int argc, char** argv){
@@ -13,6 +14,12 @@ int main(int argc, char** argv){
     
     std::vector<Record*> records;
     read_records(argv[1], &records);
+    
+    //Record start time of program.
+    //We do not include parsing of the csv because that is irrelevant to our metrics.
+    struct timeb t;
+    ftime(&t);
+    long start_ms = t.time * 1000 + t.millitm;
     
     printf("Initializing Heapfile\n");
     
@@ -31,7 +38,6 @@ int main(int argc, char** argv){
     for(int i = 0; i < records.size(); i++){
         printf("Record %d: ", i);
         print_record(records.at(i));
-        printf("\n");
         
         if(add_fixed_len_page(page, records.at(i)) == -1){
             //Write page back to heap.
@@ -45,4 +51,8 @@ int main(int argc, char** argv){
     }
     write_page(page, heap, page_id);
     
+    //Calculate program end time.
+    ftime(&t);
+    long end_ms = t.time * 1000 + t.millitm;
+    printf("TIME: %d\n", end_ms - start_ms);
 }
