@@ -179,7 +179,6 @@ PageID alloc_page(Heapfile *heapfile) {
 
         // If we reach the end of the pages in this directoruy
         if (current_page_id == number_of_slots_in_heap*(current_heap_id + 1)) {
-            // We'll name this heapId
             current_heap_id++;
 
             if (next_directory_heap_file_id > 0) {
