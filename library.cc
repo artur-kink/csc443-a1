@@ -294,7 +294,7 @@ Record RecordIterator::next() {
     // If we are above the slot capacity and hasNext was true, we read in the next page.
     if (this->current_slot >= fixed_len_page_capacity(this->current_page)) {
         this->current_slot = 0;
-        this->current_page++;        
+        this->current_page_id++;        
         read_page(this->heap, this->current_page_id, this->current_page);
     }
 
@@ -311,7 +311,7 @@ Record RecordIterator::next() {
 bool RecordIterator::hasNext() {
     // If the current page has a next directory or we haven't finished the current one.
     // This compiles and this->current_page->data has is 0 as the first entry if there is no next page so I think it might do what I want.
-    return (*(char *)(this->current_page->data) || this->current_slot < fixed_len_page_capacity(this->current_page));
+    return (*(int *)(this->current_page->data) || this->current_slot < fixed_len_page_capacity(this->current_page));
 }
 
 RecordIterator::~RecordIterator(){
