@@ -169,8 +169,7 @@ PageID alloc_page(Heapfile *heapfile) {
     int current_heap_id = 0;
 
     // seek to the spot we shoud start the first iteration of the while loop at.
-    // This seems redundant.
-    // fseek(heapfile->file_ptr, sizeof(int), SEEK_SET);
+    fseek(heapfile->file_ptr, sizeof(int), SEEK_SET);
 
     // The infamous while loop begins
     while (current_page_id < number_of_slots_in_heap*(current_heap_id + 1)) {
@@ -225,20 +224,6 @@ PageID alloc_page(Heapfile *heapfile) {
     }
     // We dun goofed
     return -1;
-
-    // JOSEPH: Did not understand what this was doing. But looking at here page http://dblab.cs.toronto.edu/courses/443/2014/03.data-layout.html section 1.2...the above makes more sense to me.
-
-    //Find end of heapfile.
-    // fseek(heapfile->file_ptr, 0, SEEK_END);
-    // fwrite(new_page->data, new_page->page_size, 1, heapfile->file_ptr);
-    // fflush(heapfile->file_ptr);
-    // free_fixed_len_page(new_page);
-    // free(new_page);
-
-    //Calculate the id of new allocated page.
-    // fpos_t cur_pos;
-    // fgetpos(heapfile->file_ptr, &cur_pos);
-    // return cur_pos.__pos/heapfile->page_size - 1;
 }
 
 int offset_of_pid(PageID pid, int page_size) {
@@ -311,6 +296,8 @@ Record RecordIterator::next() {
 bool RecordIterator::hasNext() {
     // If the current page has a next directory or we haven't finished the current one.
     // This compiles and this->current_page->data has is 0 as the first entry if there is no next page so I think it might do what I want.
+
+    // TODO: fix this. that above assumption was wrong. I need another check to determine if there are more pages.
     return (*(int *)(this->current_page->data) || this->current_slot < fixed_len_page_capacity(this->current_page));
 }
 
