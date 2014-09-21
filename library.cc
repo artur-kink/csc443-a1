@@ -276,13 +276,6 @@ RecordIterator::RecordIterator(Heapfile *heapfile) {
 }
 
 Record RecordIterator::next() {
-    // If we are above the slot capacity and hasNext was true, we read in the next page.
-    if (this->current_slot == fixed_len_page_capacity(this->current_page)) {
-        this->current_slot = 0;
-        this->current_page_id++;        
-        read_page(this->heap, this->current_page_id, this->current_page);
-    }
-
     Record record;
     read_fixed_len_page(this->current_page, this->current_slot, &record);
 
@@ -294,10 +287,17 @@ Record RecordIterator::next() {
 }
 
 bool RecordIterator::hasNext() {
+    // If we are above the slot capacity, we read in the next page.
+    if (this->current_slot == fixed_len_page_capacity(this->current_page)) {
+        this->current_slot = 0;
+        this->current_page_id++;        
+        read_page(this->heap, this->current_page_id, this->current_page);
+    }
+
     // If there is something in the page's directory, then we know that the page must exist since we don't have a way to delete records.
     char* offset_direct_of_next_slot = ((char*)this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + (char)floor(this->current_slot / 8);
     int directory_bit_for_slot = (int)(*offset_direct_of_next_slot) >> ((this->current_slot) % 8);
-    return ((directory_bit_for_slot != 0) || this->current_slot == fixed_len_page_capacity(this->current_page));
+    return (directory_bit_for_slot != 0);
 }
 
 RecordIterator::~RecordIterator(){
