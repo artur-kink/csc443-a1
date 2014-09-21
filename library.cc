@@ -284,10 +284,19 @@ RecordIterator::RecordIterator(Heapfile *heapfile) {
     this->current_page = (Page*)malloc(sizeof(Page));
     this->current_slot = 0;
 
-    read_page(heap, current_page_id, current_page);
+    init_fixed_len_page(this->current_page, heapfile->page_size, record_size);
+
+    read_page(this->heap, this->current_page_id, this->current_page);
 }
 
 Record RecordIterator::next() {
+    // If we are above the slot capacity and hasNext was true, we read in the next page.
+    if (this->current_slot >= fixed_len_page_capacity(this->current_page)) {
+        this->current_slot = 0;
+        this->current_page++;        
+        read_page(this->heap, this->current_page_id, this->current_page);
+    }
+
     Record record;
     read_fixed_len_page(this->current_page, this->current_slot, &record);
 
@@ -299,30 +308,9 @@ Record RecordIterator::next() {
 }
 
 bool RecordIterator::hasNext() {
-    while (!feof(this->heap->file_ptr)) {
-
-        unsigned char *directory_offset = ((unsigned char *) this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + ((current_slot-1)/8);
-
-        //Find next available record.
-        for (; this->current_slot < fixed_len_page_capacity(this->current_page); this->current_slot++) {
-            if (this->current_slot > 0 && this->current_slot % 8 == 0) {
-                directory_offset += 1;
-            }
-
-            //Retrieve record from slot if its marked in the directory.
-            unsigned char directory = *directory_offset;
-            if (directory >> (this->current_slot % 8) & 0x01) {
-                return true;
-            }
-        }
-
-        this->current_page_id++;
-        this->current_slot = 0;
-        free_fixed_len_page(this->current_page);
-        read_page(this->heap, this->current_page_id, this->current_page);
-    }
-
-    return false;
+    // If the current page has a next directory or we haven't finished the current one.
+    // This compiles and this->current_page->data is 0 if there is no next page so I think it might do what I want.
+    return (*(char *)(this->current_page->data) || this->current_slot < fixed_len_page_capacity(this->current_page));
 }
 
 RecordIterator::~RecordIterator(){
