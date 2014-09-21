@@ -222,9 +222,9 @@ PageID alloc_page(Heapfile *heapfile) {
             // seek to the spot we shoud start the next iteration of the while loop at.
             fseek(heapfile->file_ptr, offset_to_directory(heapfile->page_size, current_heap_id), SEEK_SET);
         }
-        // We dun goofed
-        return -1;
     }
+    // We dun goofed
+    return -1;
 
     // JOSEPH: Did not understand what this was doing. But looking at here page http://dblab.cs.toronto.edu/courses/443/2014/03.data-layout.html section 1.2...the above makes more sense to me.
 
