@@ -216,7 +216,7 @@ PageID alloc_page(Heapfile *heapfile) {
                 }
             }
             // seek to the spot we shoud start the next iteration of the while loop at.
-            fseek(heapfile->file_ptr, offset_to_directory(current_heap_id, heapfile->page_size), SEEK_SET);
+            fseek(heapfile->file_ptr, offset_to_directory(current_heap_id, heapfile->page_size) + sizeof(int), SEEK_SET);
         }
     }
     // We dun goofed
@@ -288,6 +288,7 @@ bool RecordIterator::hasNext() {
     if (this->current_slot == fixed_len_page_capacity(this->current_page)) {
         this->current_slot = 0;
         this->current_page_id++;
+
         read_page(this->heap, this->current_page_id, this->current_page);
     }
 
