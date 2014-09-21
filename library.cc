@@ -136,9 +136,6 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
     int next_directory_heap_file_id = 0;
     fwrite(&next_directory_heap_file_id, sizeof(int), 1, file);
 
-    // seek to the spot we shoud start the first iteration of the for loop at.
-    // Actually this seem redundant here?
-    // fseek(heapfile->file_ptr, sizeof(int), SEEK_SET);
     for (int i = 0; i < number_of_slots_in_heap; i++) {
         // Write the pid
         fwrite(&i, sizeof(int), 1, file);
@@ -249,7 +246,7 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size), SEEK_SET);
     fwrite(page->data, page->page_size, 1, heapfile->file_ptr);
 
-    // Seek to the free space bit of this pid. Might be redundant.
+    // Seek to the free space bit of this pid.
     int offset_of_directory = offset_to_directory(heap_id_of_page, heapfile->page_size);
     int offset_of_directory_entry = offset_of_directory + sizeof(int) + (sizeof(int) + sizeof(int))*(pid % number_of_slots_in_heap_directory(heapfile->page_size));
     fseek(heapfile->file_ptr, offset_of_directory_entry + sizeof(int), SEEK_SET);
