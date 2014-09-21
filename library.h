@@ -117,6 +117,11 @@ void write_fixed_len_page(Page *page, int slot, Record *r);
 void read_fixed_len_page(Page *page, int slot, Record *r);
 
 /**
+ * Return number of slots in a heap directory given the size of a page.
+ */
+int number_of_slots_in_heap_directory(int page_size);
+
+/**
  * Initalize a heapfile to use the file and page size given.
  */
 void init_heapfile(Heapfile *heapfile, int page_size, FILE *file);
@@ -125,6 +130,16 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file);
  * Allocate another page in the heapfile.  This grows the file by a page.
  */
 PageID alloc_page(Heapfile *heapfile);
+
+/**
+ * Return the offset to the begining of a heap directory given it's id and a page size.
+ */
+int offset_to_directory(int directory_id, int page_size);
+
+/**
+ * Return the offset to a page given it's id and a page size.
+ */
+int offset_of_pid(PageID pid, int page_size);
 
 /**
  * Read a page into memory
