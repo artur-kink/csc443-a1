@@ -114,7 +114,7 @@ void read_fixed_len_page(Page *page, int slot, Record *r) {
     //It is up to the caller to make sure the requested slot is actually not empty.
     char* slot_ptr = (char*)page->data + (page->slot_size * slot);
     fixed_len_read(slot_ptr, page->slot_size, r);
-}
+}   
 
 void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
     // number of directory slots is given by the structure defined in the data layout doc
@@ -152,7 +152,7 @@ PageID alloc_page(Heapfile *heapfile) {
     fread(&next_directory_heap_file_id, sizeof(int), 1, heapfile->file_ptr);
 
     // Lets find the free page.
-    int number_of_slots_in_heap = floor((page_size - sizeof(int)) / (sizeof(int) + sizeof(int)));
+    int number_of_slots_in_heap = floor((heapfile->page_size - sizeof(int)) / (sizeof(int) + sizeof(int)));
     PageID page_id = 0;
     // Predefine variables for looping.
     int free_space = 0;
@@ -253,7 +253,7 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     // We cant remove a page so we know the freespace. we now have to write that in the directory.
     int new_number_of_pages_written_in_this_directory = (pid % ((heapfile->page_size - sizeof(int)) / (sizeof(int) + sizeof(int))));
     int location_of_new_page = sizeof(int) + (new_number_of_pages_written_in_this_directory)*(sizeof(int) + sizeof(int));
-    fseek(location_of_new_page + sizeof(int));
+    fseek(heapfile->file_ptr, location_of_new_page + sizeof(int), SEEK_SET);
 
     int free_space_in_page = 0;
     fwrite(&free_space_in_page, sizeof(int), 1, heapfile->file_ptr);
