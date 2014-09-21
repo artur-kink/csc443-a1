@@ -190,7 +190,7 @@ PageID alloc_page(Heapfile *heapfile) {
                 // seek to the correct spot. Which is (page_size)*(slots + directory)*(current_heap_id)
                 // Number of directories we are seeking is correct since we incriemtned and use an initial value of 0 so
                 // the first time it will be 1....then 2.....
-                fseek(heapfile->file_ptr, offset_to_directory(heapfile->page_size, current_heap_id), SEEK_SET);
+                fseek(heapfile->file_ptr, offset_to_directory(current_heap_id, heapfile->page_size), SEEK_SET);
                 // Store the next id
                 fread(&next_directory_heap_file_id, sizeof(int), 1, heapfile->file_ptr);
                 // back to the while loop.
@@ -198,11 +198,11 @@ PageID alloc_page(Heapfile *heapfile) {
                 // We must create a new directory page and write the id of the new one to the old one.
 
                 // Seek to the last pages heap_id to set it
-                fseek(heapfile->file_ptr, offset_to_directory(heapfile->page_size, current_heap_id - 1), SEEK_SET);
+                fseek(heapfile->file_ptr, offset_to_directory(current_heap_id - 1, heapfile->page_size), SEEK_SET);
                 fwrite(&current_heap_id, sizeof(int), 1, heapfile->file_ptr);
 
                 // Seek to new directory page
-                fseek(heapfile->file_ptr, offset_to_directory(heapfile->page_size, current_heap_id), SEEK_SET);
+                fseek(heapfile->file_ptr, offset_to_directory(current_heap_id, heapfile->page_size), SEEK_SET);
                 // write there is no next heap file to this one
                 int next_directory_heap_file_id = 0;
                 fwrite(&next_directory_heap_file_id, sizeof(int), 1, heapfile->file_ptr);
@@ -216,7 +216,7 @@ PageID alloc_page(Heapfile *heapfile) {
                 }
             }
             // seek to the spot we shoud start the next iteration of the while loop at.
-            fseek(heapfile->file_ptr, offset_to_directory(heapfile->page_size, current_heap_id), SEEK_SET);
+            fseek(heapfile->file_ptr, offset_to_directory(current_heap_id, heapfile->page_size), SEEK_SET);
         }
     }
     // We dun goofed
