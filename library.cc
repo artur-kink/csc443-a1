@@ -250,8 +250,7 @@ int offset_of_pid(PageID pid, int page_size) {
 }
 
 void read_page(Heapfile *heapfile, PageID pid, Page *page) {
-    // Why would read initialize a page?
-    // init_fixed_len_page(page, heapfile->page_size, record_size);
+    init_fixed_len_page(page, heapfile->page_size, record_size);
 
     // Seek to the correct spot
     fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size), SEEK_SET);
