@@ -116,11 +116,21 @@ void read_fixed_len_page(Page *page, int slot, Record *r) {
     fixed_len_read(slot_ptr, page->slot_size, r);
 }   
 
-void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
+int number_of_slots_in_heap_directory(int page_size) {
     // number of directory slots is given by the structure defined in the data layout doc
     // We subtract the pointer to another directory file and then divy up the rest of the space by using 1 int to
     // define the amount offree space and another to give the id of the page.
-    int number_of_slots_in_heap = floor((page_size - sizeof(int)) / (sizeof(int) + sizeof(int)));
+    return floor((page_size - sizeof(int)) / (sizeof(int) + sizeof(int)));
+}
+
+int offset_to_directory(int directory_id, int page_size) {
+    // Assuming starting with 0
+    // It's (the numbber of slots + 1 (for the directory)) multiplied by the directory we want.
+    return page_size*(number_of_slots_in_heap_directory(page_size) + 1)*(directory_id);
+}
+
+void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
+    int number_of_slots_in_heap = number_of_slots_in_heap_directory(page_size);
 
     // We can use 0 to point to no other directory? Otherwise we can use a hid (pid but for heap directories?)
     int next_directory_heap_file_id = 0;
@@ -152,7 +162,7 @@ PageID alloc_page(Heapfile *heapfile) {
     fread(&next_directory_heap_file_id, sizeof(int), 1, heapfile->file_ptr);
 
     // Lets find the free page.
-    int number_of_slots_in_heap = floor((heapfile->page_size - sizeof(int)) / (sizeof(int) + sizeof(int)));
+    int number_of_slots_in_heap = number_of_slots_in_heap_directory(heapfile->page_size);
     PageID page_id = 0;
     // Predefine variables for looping.
     int free_space = 0;
@@ -185,7 +195,7 @@ PageID alloc_page(Heapfile *heapfile) {
                 // seek to the correct spot. Which is (page_size)*(slots + directory)*(current_heap_id)
                 // Number of directories we are seeking is correct since we incriemtned and use an initial value of 0 so
                 // the first time it will be 1....then 2.....
-                fseek(heapfile->file_ptr, heapfile->page_size*(number_of_slots_in_heap + 1)*(current_heap_id), SEEK_SET);
+                fseek(heapfile->file_ptr, offset_to_directory(heapfile->page_size, current_heap_id), SEEK_SET);
                 // Store the next id
                 fread(&next_directory_heap_file_id, sizeof(int), 1, heapfile->file_ptr);
                 // back to the while loop.
@@ -193,11 +203,11 @@ PageID alloc_page(Heapfile *heapfile) {
                 // We must create a new directory page and write the id of the new one to the old one.
 
                 // Seek to the last pages heap_id to set it
-                fseek(heapfile->file_ptr, heapfile->page_size*(number_of_slots_in_heap + 1)*(current_heap_id - 1), SEEK_SET);
+                fseek(heapfile->file_ptr, offset_to_directory(heapfile->page_size, current_heap_id - 1), SEEK_SET);
                 fwrite(&current_heap_id, sizeof(int), 1, heapfile->file_ptr);
 
                 // Seek to new directory page
-                fseek(heapfile->file_ptr, heapfile->page_size*(number_of_slots_in_heap + 1)*(current_heap_id), SEEK_SET);
+                fseek(heapfile->file_ptr, offset_to_directory(heapfile->page_size, current_heap_id), SEEK_SET);
                 // write there is no next heap file to this one
                 int next_directory_heap_file_id = 0;
                 fwrite(&next_directory_heap_file_id, sizeof(int), 1, heapfile->file_ptr);
@@ -211,7 +221,7 @@ PageID alloc_page(Heapfile *heapfile) {
                 }
             }
             // seek to the spot we shoud start the next iteration of the while loop at.
-            fseek(heapfile->file_ptr, heapfile->page_size*(number_of_slots_in_heap + 1)*(current_heap_id), SEEK_SET);
+            fseek(heapfile->file_ptr, offset_to_directory(heapfile->page_size, current_heap_id), SEEK_SET);
         }
         // We dun goofed
         return -1;
@@ -232,14 +242,19 @@ PageID alloc_page(Heapfile *heapfile) {
     // return cur_pos.__pos/heapfile->page_size - 1;
 }
 
+int offset_of_pid(PageID pid, int page_size) {
+    int heap_id_of_page = floor(pid/number_of_slots_in_heap_directory(page_size));
+    // We cant remove a page so we know the freespace. we now have to write that in the directory.
+    //(number of directories + number of pid's) * (page_size)
+    return page_size * ((heap_id_of_page + 1) + pid);
+}
+
 void read_page(Heapfile *heapfile, PageID pid, Page *page) {
     // Why would read initialize a page?
     // init_fixed_len_page(page, heapfile->page_size, record_size);
 
-    int heap_id_of_page = floor(pid/((heapfile->page_size - sizeof(int)) / (sizeof(int) + sizeof(int))));
-
-    // Seek to the correct spots (number of directories + number of pid's) * (page_size)
-    fseek(heapfile->file_ptr, heapfile->page_size * ((heap_id_of_page + 1) + pid), SEEK_SET);
+    // Seek to the correct spot
+    fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size), SEEK_SET);
     fread(page->data, page->page_size, 1, heapfile->file_ptr);
     rewind(heapfile->file_ptr);
 }
@@ -247,17 +262,14 @@ void read_page(Heapfile *heapfile, PageID pid, Page *page) {
 void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     // look above.
     int heap_id_of_page = floor(pid/(heapfile->page_size - sizeof(int)) / (sizeof(int) + sizeof(int)));
-    fseek(heapfile->file_ptr, heapfile->page_size * ((heap_id_of_page + 1) + pid), SEEK_SET);
+    fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size), SEEK_SET);
     fwrite(page->data, page->page_size, 1, heapfile->file_ptr);
 
-    // We cant remove a page so we know the freespace. we now have to write that in the directory.
-    int new_number_of_pages_written_in_this_directory = (pid % ((heapfile->page_size - sizeof(int)) / (sizeof(int) + sizeof(int))));
-    int location_of_new_page = sizeof(int) + (new_number_of_pages_written_in_this_directory)*(sizeof(int) + sizeof(int));
-    fseek(heapfile->file_ptr, location_of_new_page + sizeof(int), SEEK_SET);
+    // Seek to the free space bit of this pid. Might be redundant.
+    fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size) + sizeof(int), SEEK_SET);
 
     int free_space_in_page = 0;
     fwrite(&free_space_in_page, sizeof(int), 1, heapfile->file_ptr);
-
 
     rewind(heapfile->file_ptr);
     fflush(heapfile->file_ptr);
