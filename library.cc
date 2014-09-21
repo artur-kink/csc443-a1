@@ -290,7 +290,7 @@ bool RecordIterator::hasNext() {
     // If we are above the slot capacity, we read in the next page.
     if (this->current_slot == fixed_len_page_capacity(this->current_page)) {
         this->current_slot = 0;
-        this->current_page_id++;        
+        this->current_page_id++;
         read_page(this->heap, this->current_page_id, this->current_page);
     }
 
