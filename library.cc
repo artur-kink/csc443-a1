@@ -163,10 +163,9 @@ PageID alloc_page(Heapfile *heapfile) {
 
     // Lets find the free page.
     int number_of_slots_in_heap = number_of_slots_in_heap_directory(heapfile->page_size);
-    PageID page_id = 0;
+    PageID current_page_id = 0;
     // Predefine variables for looping.
     int free_space = 0;
-    int current_page_id = 0;
     int current_heap_id = 0;
 
     // seek to the spot we shoud start the first iteration of the while loop at.
@@ -176,13 +175,13 @@ PageID alloc_page(Heapfile *heapfile) {
     // The infamous while loop begins
     while (current_page_id < number_of_slots_in_heap*(current_heap_id + 1)) {
         // Read in current page info for that slot
-        fread(&page_id, sizeof(int), 1, heapfile->file_ptr);
+        fread(&current_page_id, sizeof(int), 1, heapfile->file_ptr);
         fread(&free_space, sizeof(int), 1, heapfile->file_ptr);
         // Look for enough room for a free page!
         if (free_space == heapfile->page_size) {
-            // We found it, lets bail and return the page_id;
+            // We found it, lets bail and return the current_page_id;
             rewind(heapfile->file_ptr);
-            return page_id;
+            return current_page_id;
         }
         // Lets look some more.
         current_page_id++;
@@ -259,6 +258,7 @@ void read_page(Heapfile *heapfile, PageID pid, Page *page) {
 }
 
 void write_page(Page *page, Heapfile *heapfile, PageID pid) {
+    printf("write to page id %d\n", pid);
     // look above.
     int heap_id_of_page = floor(pid/(heapfile->page_size - sizeof(int)) / (sizeof(int) + sizeof(int)));
     fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size), SEEK_SET);
