@@ -294,11 +294,13 @@ Record RecordIterator::next() {
 }
 
 bool RecordIterator::hasNext() {
-    // If the current page has a next directory or we haven't finished the current one.
-    // This compiles and this->current_page->data has is 0 as the first entry if there is no next page so I think it might do what I want.
+    // If there is something in the page slot.
+    // char* offset_direct_of_next_slot = ((char*)this->current_page->data) +fixed_len_page_directory_offset(this->current_page) + (this->current_slot % 8);
+    // return ((int)(*offset_direct_of_next_slot) >> ((this->current_slot + 1)%8) == 0);
 
-    // TODO: fix this. that above assumption was wrong. I need another check to determine if there are more pages.
-    return (*(int *)(this->current_page->data) || this->current_slot < fixed_len_page_capacity(this->current_page));
+    // Experimenting here. any ideas? Tried the above to see if the directory of the page indicated this one was written to since we cannot remove records,
+    // the first record we don't find should indicate we're done?
+    return *(((int *)(this->current_page->data) + ((this->current_slot + 1) * 2) + 1));
 }
 
 RecordIterator::~RecordIterator(){
