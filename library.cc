@@ -309,7 +309,7 @@ Record RecordIterator::next() {
 
 bool RecordIterator::hasNext() {
     // If the current page has a next directory or we haven't finished the current one.
-    // This compiles and this->current_page->data is 0 if there is no next page so I think it might do what I want.
+    // This compiles and this->current_page->data has is 0 as the first entry if there is no next page so I think it might do what I want.
     return (*(char *)(this->current_page->data) || this->current_slot < fixed_len_page_capacity(this->current_page));
 }
 
