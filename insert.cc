@@ -20,10 +20,47 @@ int main(int argc, char** argv){
     
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
     FILE* heap_file = fopen(argv[1], "r+b");
-    if(!heap_file){
+    if (!heap_file) {
         printf("Failed to open heap file: %s\n", argv[1]);
         return 3;
     }
+
     init_heapfile(heap, atoi(argv[3]), heap_file);
-    
+
+    Page* p = (Page*)malloc(sizeof(Page*));
+
+    PageID current_id = 0;
+    int records_exhausted = 0;
+    while (records_exhausted < records.size()) {
+
+        // seek to the next free page, starting at current_id + 1 since we've
+        // already operated on the page at current_id(or it's zero, in which case
+        // we're at the first directory page and there's no need to examine it)
+        PageID current_id = seek_page(p, current_id + 1, heap, false);
+
+        // if no free page exists, we need to create a new one to insert into.
+        if (current_id == -1) {
+            current_id = alloc_page(heap);
+            read_page(heap, current_id, p);
+        }
+
+        // insert a record into each free slot, short-circuit if we run out
+        std::vector<int> freeslots = fixed_len_page_freeslots(p);
+        for (int i = 0; i < freeslots.size(); i++) {
+            write_fixed_len_page(p, freeslots[i], records[records_exhausted]);
+            records_exhausted++;
+
+            if (records_exhausted >= records.size())
+                break;
+        }
+
+        write_page(p, heap, current_id);
+    }
+
+    free(p);
+
+    fclose(heap_file);
+    free(heap);
+
+    return 0;
 };
