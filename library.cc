@@ -289,10 +289,10 @@ PageID seek_page(Page* page, Page* dir_page, int start_pid, Heapfile* heap, bool
         since we know how many data pages each directory "points" to
      2. subtract that current_dir_pid from our start pid to get the index of the slot
         that tells us how much our current page has
-     3. read dir page at that slot (I guess we wouldn't need to do this on the
-                                    first iteration, or on many iterations at all,
-                                    since the current dir page will already be
-                                    in dir_page)
+     3. read dir page at dir pid (I guess we wouldn't need to do this on the
+                                  first iteration, or on many iterations at all,
+                                  since the current dir page will already be
+                                  in dir_page)
      4. seek to that slot in dir page
      5. if should_be_occupied and the amount of freespace listed in the slot is 0
         OR not should_be_occupied and freespace > 0:
