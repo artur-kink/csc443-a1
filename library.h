@@ -96,7 +96,7 @@ int fixed_len_page_directory_offset(Page *page);
 /*
  * Calculate the free space (number of free slots) in the page
  */
-int fixed_len_page_freeslots(Page *page);
+std::vector<int> fixed_len_page_freeslots(Page *page);
 
 /**
  * Add a record to the page
@@ -137,6 +137,11 @@ PageID alloc_page(Heapfile *heapfile);
 int offset_to_directory(int directory_id, int page_size);
 
 /**
+ * Return whether the page at the given page id is a directory page.
+ */
+bool is_directory_pid(PageID pid, int page_size);
+
+/**
  * Return the offset to a page given it's id and a page size.
  */
 int offset_of_pid(PageID pid, int page_size);
@@ -150,6 +155,14 @@ void read_page(Heapfile *heapfile, PageID pid, Page *page);
  * Write a page from memory to disk
  */
 void write_page(Page *page, Heapfile *heapfile, PageID pid);
+
+/**
+ * Seek to a page on the disk from the given starting page id.
+ * If should_be_occupied is true, seeks to the first page with some
+ * records stored in it, otherwise seeks to the first page with
+ * no records stored in it.
+ */
+PageID seek_page(Page* page, int start_pid, Heapfile* heap, bool should_be_occupied);
 
 /**
  * Iterator to iterate over all records in a heap.
