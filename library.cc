@@ -299,6 +299,7 @@ PageID seek_page(Page* page, Page* dir_page, int start_pid, Heapfile* heap, bool
             read the page with the current pid from heap
             return page id at the current page slot
      6. else, repeat with current pid incremented.
+     7. return -1 if our current pid doesn't exist in the file
      */
 
     return -1;
