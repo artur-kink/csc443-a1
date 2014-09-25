@@ -162,7 +162,7 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid);
  * records stored in it, otherwise seeks to the first page with
  * no records stored in it.
  */
-PageID seek_page(Page* page, int start_pid, Heapfile* heap, bool should_be_occupied);
+PageID seek_page(Page* page, Page* dir_page, int start_pid, Heapfile* heap, bool should_be_occupied);
 
 /**
  * Iterator to iterate over all records in a heap.
@@ -177,9 +177,13 @@ private:
     
     /** Id of current page. */
     PageID current_page_id;
-    
+
     /** The current record directory slot being checked */
     int current_slot;
+
+    Page* current_directory_page;
+
+    PageID current_directory_page_id;
     
 public:
     

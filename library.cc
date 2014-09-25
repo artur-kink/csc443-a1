@@ -142,11 +142,14 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
     fwrite(&next_directory_heap_file_id, sizeof(int), 1, file);
 
     for (int i = 0; i < number_of_slots_in_heap; i++) {
+
         // Write the pid
         fwrite(&i, sizeof(int), 1, file);
+
         // Write the amount of free space on each of the pages, initially the size of the page.
         fwrite(&page_size, sizeof(int), 1, file);
     }
+
 
     // I assume we want to do this? But maybe I'm just used to writing files in python.
     rewind(file);
@@ -280,11 +283,8 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     fflush(heapfile->file_ptr);
 }
 
-PageID seek_page(Page* page, int start_pid, Heapfile* heap, bool should_be_occupied) {
+PageID seek_page(Page* page, Page* dir_page, int start_pid, Heapfile* heap, bool should_be_occupied) {
     fseek(heap->file_ptr, offset_of_pid(start_pid, heap->page_size), SEEK_SET);
-
-    // TODO: find the max PID in the file, so seek back to the last directory's end
-    // and check the id of the last page, or otherwise calculate it using arithmetic
 
     /*
     next_pid = start_pid
@@ -299,6 +299,23 @@ PageID seek_page(Page* page, int start_pid, Heapfile* heap, bool should_be_occup
     }
     */
 
+    /*
+     1. figure out the current directory pid from the start_pid -- simple arithmetic
+        since we know how many data pages each directory "points" to
+     2. subtract that current_dir_pid from our start pid to get the index of the slot
+        that tells us how much our current page has
+     3. read dir page at that slot (I guess we wouldn't need to do this on the
+                                    first iteration, or on many iterations at all,
+                                    since the current dir page will already be
+                                    in dir_page)
+     4. seek to that slot in dir page
+     5. if should_be_occupied and the amount of freespace listed in the slot is 0
+        OR not should_be_occupied and freespace > 0:
+            read the page with the current pid from heap
+            return page id at the current page slot
+     6. else, repeat with current pid incremented.
+     */
+
     return -1;
 }
 
@@ -308,10 +325,13 @@ RecordIterator::RecordIterator(Heapfile *heapfile) {
     
     //Start at first page.
     this->current_page_id = 0;
+    this->current_directory_page_id = 0;
     this->current_page = (Page*)malloc(sizeof(Page));
+    this->current_directory_page = (Page*)malloc(sizeof(Page));
     this->current_slot = 0;
 
     init_fixed_len_page(this->current_page, heapfile->page_size, record_size);
+    init_fixed_len_page(this->current_directory_page, heapfile->page_size, record_size);
 
     read_page(this->heap, this->current_page_id, this->current_page);
 }
@@ -331,7 +351,7 @@ bool RecordIterator::hasNext() {
         this->current_slot = 0;
         this->current_page_id++;
 
-        this->current_page_id = seek_page(this->current_page, this->current_page_id, this->heap, true);
+        this->current_page_id = seek_page(this->current_page, this->current_directory_page, this->current_page_id, this->heap, true);
     }
 
     // If there is something in the page's directory, then we

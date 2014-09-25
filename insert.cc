@@ -28,6 +28,7 @@ int main(int argc, char** argv){
     init_heapfile(heap, atoi(argv[3]), heap_file);
 
     Page* p = (Page*)malloc(sizeof(Page*));
+    Page* dp = (Page*)malloc(sizeof(Page*));
 
     PageID current_id = 0;
     int records_exhausted = 0;
@@ -36,7 +37,7 @@ int main(int argc, char** argv){
         // seek to the next free page, starting at current_id + 1 since we've
         // already operated on the page at current_id(or it's zero, in which case
         // we're at the first directory page and there's no need to examine it)
-        PageID current_id = seek_page(p, current_id + 1, heap, false);
+        PageID current_id = seek_page(p, dp, current_id + 1, heap, false);
 
         // if no free page exists, we need to create a new one to insert into.
         if (current_id == -1) {
@@ -58,6 +59,7 @@ int main(int argc, char** argv){
     }
 
     free(p);
+    free(dp);
 
     fclose(heap_file);
     free(heap);
