@@ -284,21 +284,6 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 }
 
 PageID seek_page(Page* page, Page* dir_page, int start_pid, Heapfile* heap, bool should_be_occupied) {
-    fseek(heap->file_ptr, offset_of_pid(start_pid, heap->page_size), SEEK_SET);
-
-    /*
-    next_pid = start_pid
-    while (next_pid <= [MAX_PID_IN_FILE]) {
-        read_page(heap, next_pid, page)
-        if (!is_directory_pid(next_pid, heap->page_size) AND
-            (the page has free space and !should_be_occupied ||
-             the page has no free space and should_be_occupied)) {
-            return next_pid
-        }
-        next_pid++
-    }
-    */
-
     /*
      1. figure out the current directory pid from the start_pid -- simple arithmetic
         since we know how many data pages each directory "points" to
