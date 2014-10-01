@@ -245,7 +245,7 @@ bool is_directory_pid(PageID pid, int page_size) {
     return pid % number_of_pages_in_heap_directory(page_size) == 0;
 }
 
-int heap_id_of_page(PageID pid, int page_size) {
+PageID heap_id_of_page(PageID pid, int page_size) {
     return floor(pid / number_of_pages_in_heap_directory(page_size));
 }
 
@@ -267,13 +267,14 @@ void read_page(Heapfile *heapfile, PageID pid, Page *page) {
 void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 
     // look above.
-    int heap_id_of_page = floor(pid / number_of_pages_in_heap_directory(heapfile->page_size));
+    int heap_id = heap_id_of_page(pid, page->page_size);
 
     fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size), SEEK_SET);
     fwrite(page->data, page->page_size, 1, heapfile->file_ptr);
 
     // Seek to the free space bit of this pid.
-    int offset_of_directory_entry = offset_of_pid(pid, heapfile->page_size);
+    int slot_index = pid - heap_id;
+    int offset_of_directory_entry = sizeof(int) + sizeof(int) * 2 * slot_index;
     fseek(heapfile->file_ptr, offset_of_directory_entry + sizeof(int), SEEK_SET);
 
     int free_space_in_page = 0;
@@ -283,27 +284,32 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     fflush(heapfile->file_ptr);
 }
 
-PageID seek_page(Page* page, Page* dir_page, int start_pid, Heapfile* heap, bool should_be_occupied) {
+PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, bool should_be_occupied) {
+    if (feof(heap->file_ptr))
+        return -1;
+
 
     int page_size = heap->page_size;
     int slots_in_heap = number_of_pages_in_heap_directory(page_size);
-    bool examined_last_heap = false;
 
-    int current_pid = start_pid;
-    int heap_id = heap_id_of_page(start_pid, page_size);
+    PageID current_pid = start_pid;
+    PageID heap_id = heap_id_of_page(start_pid, page_size);
 
-    while (!examined_last_heap) {
-        int page_index = current_pid - heap_id;
-        int last_page_id = last_pid_of_directory(heap_id, page_size);
+    // next heap id is initialized when we read the first directory page
+    PageID next_heap_id = -1;
+
+    while (next_heap_id != 0) {
+        PageID last_page_id = last_pid_of_directory(heap_id, page_size);
 
         char* dp_data = (char*)(dir_page->data);
-        int next_heap_id = (int)(*dp_data);
+        next_heap_id = (int)(*dp_data);
+
 
         read_page(heap, heap_id, dir_page);
-        examined_last_heap = next_heap_id == 0;
 
         for (; current_pid <= last_page_id; current_pid++) {
-            int page_offset = sizeof(int) + (current_pid - heap_id) * sizeof(int)*2;
+            int page_index = current_pid - heap_id;
+            int page_offset = sizeof(int) + page_index * sizeof(int)*2;
             int freespace = (int) *(dp_data + page_offset + sizeof(int));
 
             if ((should_be_occupied && freespace == 0) ||
@@ -353,13 +359,6 @@ bool RecordIterator::hasNext() {
 
         this->current_page_id = seek_page(this->current_page, this->current_directory_page, this->current_page_id, this->heap, true);
     }
-
-    // If there is something in the page's directory, then we
-    // know that the page must exist since we don't have a way to delete records.
-//    char* offset_direct_of_next_slot = ((char*)this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + (char)floor(this->current_slot / 8);
-//    int directory_bit_for_slot = (int)(*offset_direct_of_next_slot) >> ((this->current_slot) % 8);
-//    return (directory_bit_for_slot != 0);
-
 
     return this->current_page_id != -1;
 }
