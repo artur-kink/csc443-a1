@@ -299,7 +299,6 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
     if (feof(heap->file_ptr))
         return -1;
 
-
     int page_size = heap->page_size;
     int slots_in_heap = number_of_pages_in_heap_directory(page_size);
 
