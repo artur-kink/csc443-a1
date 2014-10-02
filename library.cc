@@ -47,14 +47,15 @@ std::vector<int> fixed_len_page_freeslots(Page *page) {
     std::vector<int> freeslots;
 
     //Get directory.
-    char* directory = ((char*)page->data) + fixed_len_page_directory_offset(page);
+    unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
 
     //Loop over directory to see which records are free.
-    for(int i = 0; i < fixed_len_page_capacity(page); i++){
+    for(int i = 0; i < fixed_len_page_capacity(page); i++) {
+        unsigned char directory = *directory_offset;
         if(i%8 == 0)
             directory++;
 
-        if((int)(*directory) >> (i%8) == 0){
+        if(directory >> (i%8) == 0){
             freeslots.push_back(i);
         }
     }
@@ -281,12 +282,13 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size), SEEK_SET);
     fwrite(page->data, page->page_size, 1, heapfile->file_ptr);
 
+
     // Seek to the free space bit of this pid.
     int slot_index = pid % number_of_pages_in_heap_directory(page->page_size);
     int offset_of_directory_entry = sizeof(int) + sizeof(int) * 2 * slot_index;
     fseek(heapfile->file_ptr, offset_to_directory(heap_id, heapfile->page_size) + offset_of_directory_entry + sizeof(int), SEEK_SET);
 
-    int free_space_in_page = 0;
+    int free_space_in_page = fixed_len_page_freeslots(page).size() * record_size;
     fwrite(&free_space_in_page, sizeof(int), 1, heapfile->file_ptr);
 
     rewind(heapfile->file_ptr);
