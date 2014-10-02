@@ -311,10 +311,10 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
     while (true) {
         PageID last_page_id = last_pid_of_directory(heap_id, page_size);
 
+        read_directory_page(heap, heap_id, dir_page);
+
         char* dp_data = (char*)(dir_page->data);
         next_heap_id = (int)(*dp_data);
-
-        read_directory_page(heap, heap_id, dir_page);
 
         for (; current_pid < last_page_id; current_pid++) {
             int page_index = current_pid - heap_id;
@@ -342,7 +342,7 @@ RecordIterator::RecordIterator(Heapfile *heapfile) {
     rewind(heapfile->file_ptr);
 
     //Start at first page.
-    this->current_page_id = -1;
+    this->current_page_id = 0;
     this->current_directory_page_id = 0;
     this->current_page = (Page*)malloc(sizeof(Page));
     this->current_directory_page = (Page*)malloc(sizeof(Page));
