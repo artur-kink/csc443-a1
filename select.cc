@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     int attribute_id = atoi(argv[2]);
     char* start = argv[3];
     char* end = argv[4];
-    
+
     //Open heap file.
     FILE* heap_file = fopen(argv[1], "rb");
     if (!heap_file) {
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    //Record Start Time 
+    //Record Start Time
     struct timeb t;
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     Heapfile* heap = (Heapfile*) malloc(sizeof (Heapfile));
     init_heapfile(heap, atoi(argv[5]), heap_file);
     RecordIterator* recordi = new RecordIterator(heap);
-    
+
     //Find all records matching query.
     int number_of_records_matching_query = 0;
     int total_number_of_records = 0;
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
         }
         total_number_of_records++;
     }
-    
+
     //Calculate program runtime.
     ftime(&t);
     long end_ms = t.time * 1000 + t.millitm;

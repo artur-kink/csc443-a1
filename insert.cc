@@ -25,7 +25,10 @@ int main(int argc, char** argv){
         return 3;
     }
 
-    init_heapfile(heap, atoi(argv[3]), heap_file);
+    //init_heapfile(heap, atoi(argv[3]), heap_file);
+
+    heap->page_size = atoi(argv[3]);
+    heap->file_ptr = heap_file;
 
     Page* p = (Page*)malloc(sizeof(Page*));
     Page* dp = (Page*)malloc(sizeof(Page*));
