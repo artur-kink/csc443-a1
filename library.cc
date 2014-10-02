@@ -52,7 +52,7 @@ std::vector<int> fixed_len_page_freeslots(Page *page) {
     //Loop over directory to see which records are free.
     for(int i = 0; i < fixed_len_page_capacity(page); i++) {
         unsigned char directory = *directory_offset;
-        if(i%8 == 0)
+        if(i > 0 && i%8 == 0)
             directory++;
 
         if(directory >> (i%8) == 0){

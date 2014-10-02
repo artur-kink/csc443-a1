@@ -30,24 +30,24 @@ int main(int argc, char** argv){
     heap->page_size = atoi(argv[3]);
     heap->file_ptr = heap_file;
 
-    Page* p = (Page*)malloc(sizeof(Page*));
-    Page* dp = (Page*)malloc(sizeof(Page*));
+    Page* page = (Page*)malloc(sizeof(Page*));
+    Page* directoryPage = (Page*)malloc(sizeof(Page*));
 
     PageID current_id = 0; // we increment at the top of the loop;
     int records_exhausted = 0;
     while (records_exhausted < records.size()) {
-        PageID current_id = seek_page(p, dp, current_id, heap, false);
+        PageID current_id = seek_page(page, directoryPage, current_id, heap, false);
 
         // if no free page exists, we need to create a new one to insert into.
         if (current_id == -1) {
             current_id = alloc_page(heap);
-            read_page(heap, current_id, p);
+            read_page(heap, current_id, page);
         }
 
         // insert a record into each free slot, short-circuit if we run out
-        std::vector<int> freeslots = fixed_len_page_freeslots(p);
+        std::vector<int> freeslots = fixed_len_page_freeslots(page);
         for (int i = 0; i < freeslots.size(); i++) {
-            write_fixed_len_page(p, freeslots[i], records[records_exhausted]);
+            write_fixed_len_page(page, freeslots[i], records[records_exhausted]);
             records_exhausted++;
 
             if (records_exhausted >= records.size())
@@ -57,13 +57,13 @@ int main(int argc, char** argv){
         // only write the page if we would have emptied some records into it,
         // which occurs when there are some free record slots.
         if (freeslots.size() > 0) {
-            write_page(p, heap, current_id);
+            write_page(page, heap, current_id);
         }
         current_id++;
     }
 
-    free(p);
-    free(dp);
+    free(page);
+    free(directoryPage);
 
     fclose(heap_file);
     free(heap);
