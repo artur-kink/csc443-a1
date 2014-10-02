@@ -23,4 +23,7 @@ int main(int argc, char** argv){
         Record next_record = recordi->next();
         print_record(&next_record);
     }
+
+    fclose(heap_file);
+    free(heap);
 }
