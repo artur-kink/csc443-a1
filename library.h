@@ -157,6 +157,10 @@ int offset_of_pid(PageID pid, int page_size);
 void read_page(Heapfile *heapfile, PageID pid, Page *page);
 
 /**
+ * Read a directory page into memory
+ */
+void read_directory_page(Heapfile *heapfile, PageID directory_id, Page *page);
+/**
  * Write a page from memory to disk
  */
 void write_page(Page *page, Heapfile *heapfile, PageID pid);
@@ -176,10 +180,10 @@ class RecordIterator {
 private:
     /** The heap being accessed by this iterator. */
     Heapfile* heap;
-    
+
     /** The page where the next record is stored. */
     Page* current_page;
-    
+
     /** Id of current page. */
     PageID current_page_id;
 
@@ -189,13 +193,13 @@ private:
     Page* current_directory_page;
 
     PageID current_directory_page_id;
-    
+
 public:
-    
+
     RecordIterator(Heapfile *heapfile);
     Record next();
     bool hasNext();
-    
+
     ~RecordIterator();
 };
 

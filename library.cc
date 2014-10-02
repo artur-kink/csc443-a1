@@ -115,7 +115,7 @@ void read_fixed_len_page(Page *page, int slot, Record *r) {
     //It is up to the caller to make sure the requested slot is actually not empty.
     char* slot_ptr = (char*)page->data + (page->slot_size * slot);
     fixed_len_read(slot_ptr, page->slot_size, r);
-}   
+}
 
 int number_of_pages_in_heap_directory(int page_size) {
     // number of directory slots is given by the structure defined in the data layout doc
@@ -254,6 +254,16 @@ int offset_of_pid(PageID pid, int page_size) {
     return page_size * ((heap_id_of_page(pid, page_size) + 1) + pid);
 }
 
+void read_directory_page(Heapfile *heapfile, PageID directory_id, Page *page) {
+    init_fixed_len_page(page, heapfile->page_size, record_size);
+
+    // Seek to the correct spot
+    fseek(heapfile->file_ptr, offset_to_directory(directory_id, heapfile->page_size), SEEK_SET);
+    fread(page->data, page->page_size, 1, heapfile->file_ptr);
+
+    rewind(heapfile->file_ptr);
+}
+
 void read_page(Heapfile *heapfile, PageID pid, Page *page) {
     init_fixed_len_page(page, heapfile->page_size, record_size);
 
@@ -298,27 +308,29 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
     // next heap id is initialized when we read the first directory page
     PageID next_heap_id = -1;
 
-    while (next_heap_id != 0) {
+    while (true) {
         PageID last_page_id = last_pid_of_directory(heap_id, page_size);
+
+        read_directory_page(heap, heap_id, dir_page);
 
         char* dp_data = (char*)(dir_page->data);
         next_heap_id = (int)(*dp_data);
 
-
-        read_page(heap, heap_id, dir_page);
-
-        for (; current_pid <= last_page_id; current_pid++) {
+        for (; current_pid < last_page_id; current_pid++) {
             int page_index = current_pid % slots_in_heap;
             int page_offset = sizeof(int) + page_index * sizeof(int)*2;
             int freespace = (int) *(dp_data + page_offset + sizeof(int));
+            int pid = (int) *(dp_data + page_offset);
 
-            if ((should_be_occupied && freespace == 0) ||
-                    (!should_be_occupied && freespace >= record_size)) {
+            if ((should_be_occupied && freespace == 0) || (!should_be_occupied && freespace >= record_size)) {
                 read_page(heap, current_pid, page);
                 return current_pid;
             }
         }
-
+        // We have reached the end of the last directory, time to bail
+        if (next_heap_id <= 0 && current_pid == last_pid_of_directory(heap_id, page_size)) {
+            break;
+        }
         heap_id++;
     }
 
@@ -328,7 +340,7 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
 RecordIterator::RecordIterator(Heapfile *heapfile) {
     this->heap = heapfile;
     rewind(heapfile->file_ptr);
-    
+
     //Start at first page.
     this->current_page_id = 0;
     this->current_directory_page_id = 0;
@@ -339,7 +351,7 @@ RecordIterator::RecordIterator(Heapfile *heapfile) {
     init_fixed_len_page(this->current_page, heapfile->page_size, record_size);
     init_fixed_len_page(this->current_directory_page, heapfile->page_size, record_size);
 
-    read_page(this->heap, this->current_page_id, this->current_page);
+    this->current_page_id = seek_page(this->current_page, this->current_directory_page, this->current_page_id, this->heap, true);
 }
 
 Record RecordIterator::next() {
@@ -352,6 +364,15 @@ Record RecordIterator::next() {
 }
 
 bool RecordIterator::hasNext() {
+    while (this->current_slot < fixed_len_page_capacity(this->current_page)) {
+        char* offset_direct_of_current_slot = ((char*)this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + (char)floor(this->current_slot / 8);
+        int directory_bit_for_slot = (int)(*offset_direct_of_current_slot) >> ((this->current_slot) % 8);
+        if ((directory_bit_for_slot != 0)) {
+            break;
+        }
+        this->current_slot++;
+    }
+
     // If we are above the slot capacity, we read in the next page.
     if (this->current_slot == fixed_len_page_capacity(this->current_page)) {
         this->current_slot = 0;
@@ -367,7 +388,7 @@ RecordIterator::~RecordIterator(){
     //Free the current page memory.
     free_fixed_len_page(current_page);
     free(current_page);
-    
+
     heap = 0;
     current_page = 0;
 }
