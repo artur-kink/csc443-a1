@@ -299,7 +299,6 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
     if (feof(heap->file_ptr))
         return -1;
 
-
     int page_size = heap->page_size;
     int slots_in_heap = number_of_pages_in_heap_directory(page_size);
 
@@ -312,26 +311,33 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
     while (true) {
         PageID last_page_id = last_pid_of_directory(heap_id, page_size);
 
-        if ((current_pid == last_pid_of_directory(heap_id - 1, page_size)) || current_pid == 0) {
+        if (current_pid == 0 || current_pid == last_pid_of_directory(heap_id - 1, page_size)) {
             read_directory_page(heap, heap_id, dir_page);
         }
 
         char* dp_data = (char*)(dir_page->data);
+        printf("About to read next_heap_id...\n");
         next_heap_id = *(int*)(dp_data);
+        printf("I don't get printed.\n");
 
         for (; current_pid < last_page_id; current_pid++) {
             int page_index = current_pid % slots_in_heap;
             int page_offset = sizeof(int) + page_index * sizeof(int)*2;
             int freespace = *(int*) (dp_data + page_offset + sizeof(int));
-            int pid = *(int*) (dp_data + page_offset);
+
+            // don't need to read the pid for the page since we keep track of it
+            // ourselves using current_pid
+            //int pid = *(int*) (dp_data + page_offset);
 
             if ((should_be_occupied && freespace < page_size) || (!should_be_occupied && freespace >= record_size)) {
+                printf("Reading page with pid %d\n", current_pid);
                 read_page(heap, current_pid, page);
                 return current_pid;
             }
         }
+
         // We have reached the end of the last directory, time to bail
-        if (next_heap_id <= 0 && current_pid == last_pid_of_directory(heap_id, page_size)) {
+        if (next_heap_id <= 0 && current_pid == last_page_id) {
             break;
         }
         heap_id++;
