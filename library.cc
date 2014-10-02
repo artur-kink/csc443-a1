@@ -283,9 +283,9 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     fwrite(page->data, page->page_size, 1, heapfile->file_ptr);
 
     // Seek to the free space bit of this pid.
-    int slot_index = pid - heap_id;
+    int slot_index = pid % number_of_pages_in_heap_directory(page->page_size);
     int offset_of_directory_entry = sizeof(int) + sizeof(int) * 2 * slot_index;
-    fseek(heapfile->file_ptr, offset_of_directory_entry + sizeof(int), SEEK_SET);
+    fseek(heapfile->file_ptr, offset_to_directory(heap_id, heapfile->page_size) + offset_of_directory_entry + sizeof(int), SEEK_SET);
 
     int free_space_in_page = 0;
     fwrite(&free_space_in_page, sizeof(int), 1, heapfile->file_ptr);
@@ -311,8 +311,7 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
     while (true) {
         PageID last_page_id = last_pid_of_directory(heap_id, page_size);
 
-        if ((current_pid == last_pid_of_directory(heap_id, page_size) + 1) || current_pid == 0 || ((current_pid == last_pid_of_directory(heap_id - 1, page_size)))) {
-            printf("reading in directory for heapid %d\n", heap_id);
+        if ((current_pid == last_pid_of_directory(heap_id - 1, page_size)) || current_pid == 0) {
             read_directory_page(heap, heap_id, dir_page);
         }
 
