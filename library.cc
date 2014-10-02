@@ -311,7 +311,10 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
     while (true) {
         PageID last_page_id = last_pid_of_directory(heap_id, page_size);
 
-        read_directory_page(heap, heap_id, dir_page);
+        if ((current_pid == last_pid_of_directory(heap_id, page_size) + 1) || current_pid == 0 || ((current_pid == last_pid_of_directory(heap_id - 1, page_size)))) {
+            printf("reading in directory for heapid %d\n", heap_id);
+            read_directory_page(heap, heap_id, dir_page);
+        }
 
         char* dp_data = (char*)(dir_page->data);
         next_heap_id = (int)(*dp_data);
@@ -319,10 +322,10 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
         for (; current_pid < last_page_id; current_pid++) {
             int page_index = current_pid % slots_in_heap;
             int page_offset = sizeof(int) + page_index * sizeof(int)*2;
-            int freespace = (int) *(dp_data + page_offset + sizeof(int));
-            int pid = (int) *(dp_data + page_offset);
+            int freespace = *(int*) (dp_data + page_offset + sizeof(int));
+            int pid = *(int*) (dp_data + page_offset);
 
-            if ((should_be_occupied && freespace == 0) || (!should_be_occupied && freespace >= record_size)) {
+            if ((should_be_occupied && freespace < page_size) || (!should_be_occupied && freespace >= record_size)) {
                 read_page(heap, current_pid, page);
                 return current_pid;
             }
@@ -343,7 +346,6 @@ RecordIterator::RecordIterator(Heapfile *heapfile) {
 
     //Start at first page.
     this->current_page_id = 0;
-    this->current_directory_page_id = 0;
     this->current_page = (Page*)malloc(sizeof(Page));
     this->current_directory_page = (Page*)malloc(sizeof(Page));
     this->current_slot = 0;
