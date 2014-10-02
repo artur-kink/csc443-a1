@@ -308,7 +308,7 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
         read_page(heap, heap_id, dir_page);
 
         for (; current_pid <= last_page_id; current_pid++) {
-            int page_index = current_pid - heap_id;
+            int page_index = current_pid % slots_in_heap;
             int page_offset = sizeof(int) + page_index * sizeof(int)*2;
             int freespace = (int) *(dp_data + page_offset + sizeof(int));
 
