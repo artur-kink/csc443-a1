@@ -35,8 +35,8 @@ update: update.cc library.o
 delete: delete.cc library.o
 	$(CC) -o $@ $< library.o
 
-select: select.cc library.o
-	$(CC) -o $@ $< library.o
+select: select.cc library.o csvhelper.o
+	$(CC) -o $@ $< library.o csvhelper.o
 
 csv2colstore: csv2colstore.cc library.o
 	$(CC) -o $@ $< library.o
