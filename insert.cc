@@ -30,7 +30,7 @@ int main(int argc, char** argv){
     Page* p = (Page*)malloc(sizeof(Page*));
     Page* dp = (Page*)malloc(sizeof(Page*));
 
-    PageID current_id = 0;
+    PageID current_id = -1;
     int records_exhausted = 0;
     while (records_exhausted < records.size()) {
 
