@@ -316,7 +316,7 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
         }
 
         char* dp_data = (char*)(dir_page->data);
-        next_heap_id = (int)(*dp_data);
+        next_heap_id = *(int*)(dp_data);
 
         for (; current_pid < last_page_id; current_pid++) {
             int page_index = current_pid % slots_in_heap;
