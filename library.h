@@ -96,7 +96,7 @@ int fixed_len_page_directory_offset(Page *page);
 /*
  * Calculate the free space (number of free slots) in the page
  */
-int fixed_len_page_freeslots(Page *page);
+std::vector<int> fixed_len_page_freeslots(Page *page);
 
 /**
  * Add a record to the page
@@ -137,6 +137,16 @@ PageID alloc_page(Heapfile *heapfile);
 int offset_to_directory(int directory_id, int page_size);
 
 /**
+ * Return whether the page at the given page id is a directory page.
+ */
+bool is_directory_pid(PageID pid, int page_size);
+
+/**
+ * Return the id of the directory page for the given page id.
+ */
+int heap_id_of_page(PageID pid, int page_size);
+
+/**
  * Return the offset to a page given it's id and a page size.
  */
 int offset_of_pid(PageID pid, int page_size);
@@ -147,9 +157,21 @@ int offset_of_pid(PageID pid, int page_size);
 void read_page(Heapfile *heapfile, PageID pid, Page *page);
 
 /**
+ * Read a directory page into memory
+ */
+void read_directory_page(Heapfile *heapfile, PageID directory_id, Page *page);
+/**
  * Write a page from memory to disk
  */
 void write_page(Page *page, Heapfile *heapfile, PageID pid);
+
+/**
+ * Seek to a page on the disk from the given starting page id.
+ * If should_be_occupied is true, seeks to the first page with some
+ * records stored in it, otherwise seeks to the first page with
+ * no records stored in it.
+ */
+PageID seek_page(Page* page, Page* dir_page, int start_pid, Heapfile* heap, bool should_be_occupied);
 
 /**
  * Iterator to iterate over all records in a heap.
@@ -158,22 +180,26 @@ class RecordIterator {
 private:
     /** The heap being accessed by this iterator. */
     Heapfile* heap;
-    
+
     /** The page where the next record is stored. */
     Page* current_page;
-    
+
     /** Id of current page. */
     PageID current_page_id;
-    
+
     /** The current record directory slot being checked */
     int current_slot;
-    
+
+    Page* current_directory_page;
+
+    PageID current_directory_page_id;
+
 public:
-    
+
     RecordIterator(Heapfile *heapfile);
     Record next();
     bool hasNext();
-    
+
     ~RecordIterator();
 };
 
