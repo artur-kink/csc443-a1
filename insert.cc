@@ -55,7 +55,10 @@ int main(int argc, char** argv){
                 break;
         }
 
-        write_page(p, heap, current_id);
+        // only write the page if we would have emptied some records into it,
+        // which occurs when there are some free record slots.
+        if (freeslots.size() > 0)
+            write_page(p, heap, current_id);
     }
 
     free(p);
