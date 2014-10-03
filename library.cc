@@ -305,7 +305,7 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
     // next heap id is initialized when we read the first directory page
     PageID next_heap_id = -1;
 
-    while (true) {
+    do {
         PageID last_page_id = last_pid_of_directory(heap_id, page_size);
 
         if ((current_pid == last_pid_of_directory(heap_id - 1, page_size)) || current_pid == 0) {
@@ -326,12 +326,10 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
                 return current_pid;
             }
         }
-        // We have reached the end of the last directory, time to bail
-        if (next_heap_id <= 0 && current_pid == last_pid_of_directory(heap_id, page_size)) {
-            break;
-        }
+
         heap_id++;
-    }
+
+    } while (next_heap_id > 0);
 
     return -1;
 }
