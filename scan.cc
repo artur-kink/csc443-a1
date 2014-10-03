@@ -9,7 +9,7 @@ int main(int argc, char** argv){
         printf("Usage: scan <heap_file> <page_size>\n");
         return 1;
     }
-    
+
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
     FILE* heap_file = fopen(argv[1], "rb");
     if(!heap_file){
@@ -19,8 +19,9 @@ int main(int argc, char** argv){
         return 2;
     }
 
-    init_heapfile(heap, atoi(argv[2]), heap_file);
-    
+    heap->page_size = atoi(argv[2]);
+    heap->file_ptr = heap_file;
+
     RecordIterator* recordi = new RecordIterator(heap);
     while (recordi->hasNext()) {
         Record next_record = recordi->next();
