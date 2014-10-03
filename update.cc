@@ -26,9 +26,13 @@ int main(int argc, char** argv) {
     int page_size = atoi(argv[5]);
 
     // initialize our heapfile and the page we'll be reading and writing to
-    init_heapfile(heap, page_size, heap_file);
+    heap->page_size = page_size;
+    heap->file_ptr = heap_file;
+
     Page* page = (Page*)malloc(sizeof(Page));
     init_fixed_len_page(page, page_size, record_size);
+
+    Record *record = new Record;
 
     // extract info from record id about what page and slot we're operating on
     int records_per_page = fixed_len_page_capacity(page);
@@ -38,9 +42,9 @@ int main(int argc, char** argv) {
     // read in that page and the record's contents, swap in the new attribute
     // value and write it back out
     read_page(heap, pid, page);
-    read_fixed_len_page(page, slot, r);
+    read_fixed_len_page(page, slot, record);
     (*r)[attr_index] = new_value;
-    write_fixed_len_page(page, slot, r);
+    write_fixed_len_page(page, slot, record);
 
     // and free all our stuff
     fclose(heap_file);
