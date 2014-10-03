@@ -43,11 +43,11 @@ int main(int argc, char** argv) {
     // value and write it back out
     read_page(heap, pid, page);
     read_fixed_len_page(page, slot, record);
-    (*r)[attr_index] = new_value;
+    (*record)[attr_index] = new_value;
     write_fixed_len_page(page, slot, record);
 
     // and free all our stuff
     fclose(heap_file);
-    free(r);
+    free(record);
     free(heap);
 }
