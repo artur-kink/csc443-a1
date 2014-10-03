@@ -2,7 +2,7 @@
 CC = g++
 RM = rm
 
-all: write_fixed_len_pages read_fixed_len_page csv2heapfile scan select insert
+all: write_fixed_len_pages read_fixed_len_page csv2heapfile scan select insert update
 
 library.o: library.cc library.h
 	$(CC) -o $@ -c $<
@@ -26,11 +26,11 @@ csv2heapfile: csv2heapfile.cc csvhelper.o library.o
 scan: scan.cc library.o csvhelper.o
 	$(CC) -o $@ $< library.o csvhelper.o
 
-insert: insert.cc library.o
+insert: insert.cc library.o csvhelper.o
 	$(CC) -o $@ $< library.o csvhelper.o
 
-update: update.cc library.o
-	$(CC) -o $@ $< library.o
+update: update.cc library.o csvhelper.o
+	$(CC) -o $@ $< library.o csvhelper.o
 
 delete: delete.cc library.o
 	$(CC) -o $@ $< library.o
