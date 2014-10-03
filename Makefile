@@ -48,4 +48,5 @@ select3: select3.cc library.o
 	$(CC) -o $@ $< library.o
 
 clean:
-	$(RM) *.o
+	$(RM) -vf *.o
+	$(RM) write_fixed_len_pages read_fixed_len_page csv2heapfile scan insert update delete select csv2colstore select2 select3
