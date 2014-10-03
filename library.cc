@@ -55,7 +55,7 @@ std::vector<int> fixed_len_page_freeslots(Page *page) {
         if(i > 0 && i%8 == 0)
             directory++;
 
-        if(directory >> (i%8) == 0){
+        if((directory & (1 << (i%8))) == 0){
             freeslots.push_back(i);
         }
     }
@@ -99,8 +99,10 @@ void write_fixed_len_page(Page *page, int slot, Record *r) {
 
     //Update directory, set as written.
     unsigned char directory = (unsigned char)*directory_offset;
+    printf("directory value before insert %u\n", directory);
     directory |= 1 << (slot%8);
     memcpy(directory_offset, &directory, 1);
+    printf("directory value after insert %u\n", directory);
 
     //Write record to slot.
     unsigned char* slot_ptr = ((unsigned char*)page->data) + page->slot_size*slot;

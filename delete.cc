@@ -42,16 +42,18 @@ int main(int argc, char** argv) {
     //Get byte position of slot in the directory.
     unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
     printf("The offset delete found for pid %d is %d\n", pid, fixed_len_page_directory_offset(page));
-    printf("The slot is %d \n", slot);
+    printf("The slot is %d\n", slot);
     directory_offset += slot/8;
 
     //Update directory, set as free.
     unsigned char directory = (unsigned char)*directory_offset;
-    directory |= 0 << (slot%8);
+    printf("directory before delete %u\n", directory);
+    directory &= ~(slot%8);
     memcpy(directory_offset, &directory, 1);
+    printf("directory is now %u\n", directory);
 
     write_page(page, heap, pid);
-    printf("the number of free slots: %ld\n", fixed_len_page_freeslots(page).size());
+    printf("the number of free slots after deletion: %ld\n", fixed_len_page_freeslots(page).size());
 
     // and free all our stuff
     fclose(heap_file);
