@@ -362,22 +362,26 @@ Record RecordIterator::next() {
 }
 
 bool RecordIterator::hasNext() {
-    while (this->current_slot < fixed_len_page_capacity(this->current_page)) {
-        int dir_slot_offset = *(int*) (((char*)this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + (char)floor(this->current_slot / 8));
-        int directory_bit_for_slot = ((dir_slot_offset >> (current_slot % 8)) & 1);
-        printf("directory bit at slot %d for pid %d has a %d\n", current_slot, this->current_page_id, directory_bit_for_slot);
-        if ((directory_bit_for_slot != 0)) {
+    while (true) {
+        while (this->current_slot < fixed_len_page_capacity(this->current_page)) {
+            int dir_slot_offset = *(int*) (((char*)this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + (char)floor(this->current_slot / 8));
+            int directory_bit_for_slot = ((dir_slot_offset >> (current_slot % 8)) & 1);
+            printf("directory bit at slot %d for pid %d has a %d\n", current_slot, this->current_page_id, directory_bit_for_slot);
+            if ((directory_bit_for_slot != 0)) {
+                break;
+            }
+            this->current_slot++;
+        }
+        // If we are above the slot capacity, we read in the next page.
+        if (this->current_slot == fixed_len_page_capacity(this->current_page)) {
+            printf("next page\n");
+            this->current_slot = 0;
+            this->current_page_id++;
+
+            this->current_page_id = seek_page(this->current_page, this->current_directory_page, this->current_page_id, this->heap, true);
+        } else {
             break;
         }
-        this->current_slot++;
-    }
-
-    // If we are above the slot capacity, we read in the next page.
-    if (this->current_slot == fixed_len_page_capacity(this->current_page)) {
-        this->current_slot = 0;
-        this->current_page_id++;
-
-        this->current_page_id = seek_page(this->current_page, this->current_directory_page, this->current_page_id, this->heap, true);
     }
 
     return this->current_page_id != -1;
