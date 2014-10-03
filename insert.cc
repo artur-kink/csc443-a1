@@ -22,6 +22,8 @@ int main(int argc, char** argv){
     FILE* heap_file = fopen(argv[1], "r+b");
     if (!heap_file) {
         printf("Failed to open heap file: %s\n", argv[1]);
+        fclose(heap_file);
+        free(heap);
         return 3;
     }
 
@@ -31,12 +33,12 @@ int main(int argc, char** argv){
     heap->file_ptr = heap_file;
 
     Page* page = (Page*)malloc(sizeof(Page*));
-    Page* directoryPage = (Page*)malloc(sizeof(Page*));
+    Page* directory_page = (Page*)malloc(sizeof(Page*));
 
     PageID current_id = 0; // we increment at the top of the loop;
     int records_exhausted = 0;
     while (records_exhausted < records.size()) {
-        PageID current_id = seek_page(page, directoryPage, current_id, heap, false);
+        current_id = seek_page(page, directory_page, current_id, heap, false);
 
         // if no free page exists, we need to create a new one to insert into.
         if (current_id == -1) {
@@ -59,11 +61,10 @@ int main(int argc, char** argv){
         if (freeslots.size() > 0) {
             write_page(page, heap, current_id);
         }
-        current_id++;
     }
 
     free(page);
-    free(directoryPage);
+    free(directory_page);
 
     fclose(heap_file);
     free(heap);

@@ -137,11 +137,6 @@ PageID alloc_page(Heapfile *heapfile);
 int offset_to_directory(int directory_id, int page_size);
 
 /**
- * Return whether the page at the given page id is a directory page.
- */
-bool is_directory_pid(PageID pid, int page_size);
-
-/**
  * Return the id of the directory page for the given page id.
  */
 int heap_id_of_page(PageID pid, int page_size);

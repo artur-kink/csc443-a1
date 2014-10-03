@@ -241,10 +241,6 @@ PageID alloc_page(Heapfile *heapfile) {
     return -1;
 }
 
-bool is_directory_pid(PageID pid, int page_size) {
-    return pid % number_of_pages_in_heap_directory(page_size) == 0;
-}
-
 PageID heap_id_of_page(PageID pid, int page_size) {
     return floor(pid / number_of_pages_in_heap_directory(page_size));
 }
@@ -281,7 +277,6 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 
     fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size), SEEK_SET);
     fwrite(page->data, page->page_size, 1, heapfile->file_ptr);
-
 
     // Seek to the free space bit of this pid.
     int slot_index = pid % number_of_pages_in_heap_directory(page->page_size);

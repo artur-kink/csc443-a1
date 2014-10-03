@@ -14,12 +14,15 @@ int main(int argc, char** argv){
     FILE* heap_file = fopen(argv[1], "rb");
     if(!heap_file){
         printf("Failed to open heap file: %s\n", argv[1]);
+        free(heap);
+        fclose(heap_file);
         return 2;
     }
+
     init_heapfile(heap, atoi(argv[2]), heap_file);
     
     RecordIterator* recordi = new RecordIterator(heap);
-    while(recordi->hasNext()){
+    while (recordi->hasNext()) {
         Record next_record = recordi->next();
         print_record(&next_record);
     }
