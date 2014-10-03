@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
     //Update directory, set as free.
     unsigned char directory = (unsigned char)*directory_offset;
     printf("directory before delete %u\n", directory);
-    directory &= ~(slot%8);
+    directory &= ~(1 << (slot%8));
     memcpy(directory_offset, &directory, 1);
     printf("directory is now %u\n", directory);
 
