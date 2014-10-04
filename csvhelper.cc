@@ -9,7 +9,7 @@ int parse_record_id(const char* id, int* pid) {
     }
 
     int i;
-    char pid_str[len - 5 + 1];
+    char pid_str[len - 5];
     for (i = 0; i < len - 5; i++) {
         pid_str[i] = id[i];
     }
