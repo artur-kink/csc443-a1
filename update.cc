@@ -34,19 +34,17 @@ int main(int argc, char** argv) {
     char* new_value = argv[4];
     int page_size = atoi(argv[5]);
 
-    // initialize our heapfile and the page we'll be reading and writing to
+    // initialize our heapfile; not using init_heapfile to avoid zeroing
+    // out the directory
     heap->page_size = page_size;
     heap->file_ptr = heap_file;
 
+    // read in the page to update
     Page* page = (Page*)malloc(sizeof(Page));
     init_fixed_len_page(page, page_size, record_size);
 
-    Record *record = new Record;
-
-    // read in that page
     if (try_read_page(heap, pid, page) == -1) {
         fprintf(stderr, "Page id out of bounds: %d\n", pid);
-        free(record);
         fclose(heap_file);
         free(heap);
         free(page);
@@ -56,7 +54,6 @@ int main(int argc, char** argv) {
     // make sure the record exists at the given slot
     if (is_freeslot(page, slot)) {
         fprintf(stderr, "Record with id %s does not exist\n", argv[2]);
-        free(record);
         fclose(heap_file);
         free(heap);
         free(page);
@@ -64,12 +61,13 @@ int main(int argc, char** argv) {
     }
 
     // read in the record's contents, swap in the new attribute
-    // value and write it back out
+    // value and write it back out to the page
+    Record *record = new Record;
     read_fixed_len_page(page, slot, record);
     (*record)[attr_index] = new_value;
     write_fixed_len_page(page, slot, record);
 
-    // write it back to the heapfile
+    // write page back to the file
     write_page(page, heap, pid);
 
     // and free all our stuff
