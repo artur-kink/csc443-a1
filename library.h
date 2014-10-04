@@ -79,6 +79,11 @@ void fixed_len_read(void *buf, int size, Record *record);
 void init_fixed_len_page(Page *page, int page_size, int slot_size);
 
 /**
+ * Get the start of the record directory of the given page.
+ */
+unsigned char* get_directory(Page* page);
+
+/**
  * Release an allocated page from memory.
  */
 void free_fixed_len_page(Page* page);

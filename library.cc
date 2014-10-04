@@ -24,7 +24,11 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     page->data = malloc(page_size);
 
     // Create directory and set directory to empty.
-    memset((unsigned char*)page->data + fixed_len_page_directory_offset(page), 0, page->page_size - fixed_len_page_directory_offset(page));
+    memset(get_directory(page), 0, page->page_size - fixed_len_page_directory_offset(page));
+}
+
+unsigned char* get_directory(Page* page){
+    return (unsigned char*)page->data + fixed_len_page_directory_offset(page);
 }
 
 void free_fixed_len_page(Page* page){
@@ -47,7 +51,7 @@ std::vector<int> fixed_len_page_freeslot_indices(Page *page) {
     std::vector<int> freeslots;
 
     //Get directory.
-    unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
+    unsigned char* directory_offset = get_directory(page);
 
     //Loop over directory to see which records are free.
     for(int i = 0; i < fixed_len_page_capacity(page); i++) {
@@ -68,7 +72,7 @@ int fixed_len_page_freeslots(Page* page){
 }
 
 int add_fixed_len_page(Page *page, Record *r) {
-    unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
+    unsigned char* directory_offset = get_directory(page);
 
     //Iterate slots directory to find a free one.
     for(int i = 0; i < fixed_len_page_capacity(page); i++){
@@ -98,11 +102,11 @@ void write_fixed_len_page(Page *page, int slot, Record *r) {
         return;
 
     //Get byte position of slot in the directory.
-    unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
+    unsigned char* directory_offset = get_directory(page);
     directory_offset += slot/8;
 
     //Update directory, set as written.
-    unsigned char directory = (unsigned char)*directory_offset;
+    unsigned char directory = *directory_offset;
     printf("directory value before insert %u\n", directory);
     directory |= 1 << (slot%8);
     memcpy(directory_offset, &directory, 1);
