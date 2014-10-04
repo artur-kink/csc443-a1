@@ -11,7 +11,7 @@
 int main(int argc, char** argv) {
     //Check for all arguments.
     if (argc != 6) {
-        printf("Usage: select <heapfile> <attribute_id> <start> <end> <page_size>\n");
+        fprintf(stderr, "Usage: %s <heapfile> <attribute_id> <start> <end> <page_size>\n", argv[0]);
         return 1;
     }
 
@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     //Open heap file.
     FILE* heap_file = fopen(argv[1], "rb");
     if (!heap_file) {
-        printf("Failed to open heap file: %s\n", argv[1]);
+        fprintf(stderr, "Failed to open heap file: %s\n", argv[1]);
         return 2;
     }
 
@@ -42,6 +42,7 @@ int main(int argc, char** argv) {
     int total_number_of_records = 0;
     while (recordi->hasNext()) {
         Record next_record = recordi->next();
+
         //Check if attribute in selection range.
         if(strcmp(next_record.at(attribute_id), start) >= 0 && strcmp(next_record.at(attribute_id), end) <= 0){
             printf("%.5s\n", next_record.at(attribute_id));

@@ -10,16 +10,21 @@
 int main(int argc, char** argv){
     //Make sure all args are provided.
     if(argc != 4){
-        printf("Usage: csv2heapfile <csv_file> <heapfile> <page_size>\n");
+        fprintf(stderr, "Usage: %s <csv_file> <heapfile> <page_size>\n", argv[0]);
         return 1;
     }
 
     //Load records from csv.
     std::vector<Record*> records;
-    read_records(argv[1], &records);
-    if(records.size() == 0){
-        printf("No records in csv.\n");
+    int error = read_records(argv[1], &records);
+    if (error) {
+        fprintf(stderr, "Could not read records from file: %s\n", argv[1]);
         return 2;
+    }
+
+    if(records.size() == 0){
+        fprintf(stderr, "No records in file: %s\n", argv[1]);
+        return 3;
     }
     
     //Record start time of program.
@@ -35,7 +40,7 @@ int main(int argc, char** argv){
         printf("Failed to open heap file to write to: %s\n", argv[2]);
         fclose(heap_file);
         free(heap);
-        return 3;
+        return 4;
     }
     init_heapfile(heap, atoi(argv[3]), heap_file);
 
@@ -51,6 +56,7 @@ int main(int argc, char** argv){
 
         //If page is full, create new page in heap.
         if(add_fixed_len_page(page, records.at(i)) == -1){
+
             //Write page back to heap.
             write_page(page, heap, page_id);
 

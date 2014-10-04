@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
     if (argc != 6) {
-        fprintf(stderr, "Usage: %s <heapfile> <record_id> <attribute_id> <new_value> <page_size>", argv[0]);
+        fprintf(stderr, "Usage: %s <heapfile> <record_id> <attribute_id> <new_value> <page_size>\n", argv[0]);
         return 1;
     }
 

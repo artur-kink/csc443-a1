@@ -6,25 +6,29 @@
  */
 int main(int argc, char** argv){
     if(argc != 4){
-        printf("Usage: insert <heapfile> <csv_file> <page_size>\n");
+        fprintf(stderr, "Usage: %s <heapfile> <csv_file> <page_size>\n", argv[0]);
         return 1;
     }
 
     //Load records from csv.
     std::vector<Record*> records;
-    read_records(argv[2], &records);
-    if(records.size() == 0){
-        printf("No records in csv.\n");
+    int error = read_records(argv[2], &records);
+    if (error) {
+        fprintf(stderr, "Could not read records from file: %s\n", argv[2]);
         return 2;
+    }
+    if(records.size() == 0){
+        fprintf(stderr, "No records in file: %s\n", argv[2]);
+        return 3;
     }
 
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
     FILE* heap_file = fopen(argv[1], "r+b");
     if (!heap_file) {
-        printf("Failed to open heap file: %s\n", argv[1]);
+        fprintf(stderr, "Failed to open heap file: %s\n", argv[1]);
         fclose(heap_file);
         free(heap);
-        return 3;
+        return 4;
     }
 
     //init_heapfile(heap, atoi(argv[3]), heap_file);
