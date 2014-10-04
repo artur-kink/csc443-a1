@@ -99,9 +99,15 @@ int fixed_len_page_capacity(Page *page);
 int fixed_len_page_directory_offset(Page *page);
 
 /**
+ * Return whether or not the given slot is free.
+ */
+bool is_freeslot(Page *page, int slot);
+
+/**
  * Get the indices of every free slot in the given page.
  */
 std::vector<int> fixed_len_page_freeslot_indices(Page* page);
+
 /*
  * Calculate the free space (number of free slots) in the page
  */

@@ -52,6 +52,15 @@ int main(int argc, char** argv) {
         free(page);
         return 4;
     }
+
+    // make sure the record exists at the given slot
+    if (is_freeslot(page, slot)) {
+        fprintf(stderr, "Record with id %s does not exist\n", argv[2]);
+        free(record);
+        fclose(heap_file);
+        free(heap);
+        free(page);
+        return 5;
     }
 
     // read in the record's contents, swap in the new attribute

@@ -42,6 +42,13 @@ int fixed_len_page_capacity(Page *page) {
     return (fixed_len_page_directory_offset(page))/page->slot_size;
 }
 
+bool is_freeslot(Page* page, int slot){
+    unsigned char directory = *get_directory(page);
+    directory += slot / 8;
+
+    return (directory & (1 << (slot % 8))) == 0;
+}
+
 int fixed_len_page_directory_offset(Page *page) {
     // Calculate the byte offset where the directory starts.
     return page->page_size - ceil((floor((float)page->page_size/(float)page->slot_size))/8);
