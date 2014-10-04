@@ -39,7 +39,7 @@ int main(int argc, char** argv){
     Page* page = (Page*)malloc(sizeof(Page*));
     Page* directory_page = (Page*)malloc(sizeof(Page*));
 
-    PageID current_id = 0; // we increment at the top of the loop;
+    PageID current_id = 0; // increments at the end of the loop and from seek
     int records_exhausted = 0;
     while (records_exhausted < records.size()) {
         current_id = seek_page(page, directory_page, current_id, heap, false);
