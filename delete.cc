@@ -35,9 +35,12 @@ int main(int argc, char** argv) {
     int pid = record_id / records_per_page;
     int slot = record_id % records_per_page;
 
-    // read in that page and the record's contents, swap in the new attribute
-    // value and write it back out
-    read_page(heap, pid, page);
+    if (try_read_page(heap, pid, page) == -1) {
+        printf("Record id out of bounds: %d\n", pid);
+        free(page);
+        fclose(heap_file);
+        free(heap);
+    }
 
     //Get byte position of slot in the directory.
     unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
@@ -54,4 +57,6 @@ int main(int argc, char** argv) {
     fclose(heap_file);
     free(page);
     free(heap);
+
+    return 0;
 }

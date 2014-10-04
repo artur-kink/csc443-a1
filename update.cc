@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
         printf("Failed to open heap file: %s\n", argv[1]);
         fclose(heap_file);
         free(heap);
-        return 3;
+        return 2;
     }
 
     // read in rest of the arguments
@@ -39,15 +39,29 @@ int main(int argc, char** argv) {
     int pid = record_id / records_per_page;
     int slot = record_id % records_per_page;
 
-    // read in that page and the record's contents, swap in the new attribute
+    // read in that page
+    if (try_read_page(heap, pid, page) == -1) {
+        printf("Record id out of bounds: %d\n", record_id);
+        free(record);
+        fclose(heap_file);
+        free(heap);
+        free(page);
+        return 3;
+    }
+
+    // read in the record's contents, swap in the new attribute
     // value and write it back out
-    read_page(heap, pid, page);
     read_fixed_len_page(page, slot, record);
     (*record)[attr_index] = new_value;
     write_fixed_len_page(page, slot, record);
+
+    // write it back to the heapfile
+    write_page(page, heap, pid);
 
     // and free all our stuff
     fclose(heap_file);
     free(record);
     free(heap);
+
+    return 0;
 }

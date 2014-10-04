@@ -132,6 +132,11 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file);
 PageID alloc_page(Heapfile *heapfile);
 
 /**
+ * Return whether or not the provided pid is out of bounds.
+ */
+bool out_of_bounds(PageID pid, Heapfile heap);
+
+/**
  * Return the offset to the begining of a heap directory given it's id and a page size.
  */
 int offset_to_directory(int directory_id, int page_size);
@@ -150,6 +155,11 @@ int offset_of_pid(PageID pid, int page_size);
  * Read a page into memory
  */
 void read_page(Heapfile *heapfile, PageID pid, Page *page);
+
+/**
+ * Read a page into memory. Return -1 if the page does not exist.
+ */
+int try_read_page(Heapfile *heapfile, PageID pid, Page *page);
 
 /**
  * Read a directory page into memory

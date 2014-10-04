@@ -243,6 +243,14 @@ PageID alloc_page(Heapfile *heapfile) {
     return -1;
 }
 
+bool out_of_bounds(PageID pid, Heapfile* heap) {
+    fseek(heap->file_ptr, 0, SEEK_END);
+    int file_length = ftell(heap->file_ptr);
+    fseek(heap->file_ptr, 0, SEEK_SET);
+
+    return pid < 0 || offset_of_pid(pid, heap->page_size) > file_length;
+}
+
 PageID heap_id_of_page(PageID pid, int page_size) {
     return floor(pid / number_of_pages_in_heap_directory(page_size));
 }
@@ -270,6 +278,14 @@ void read_page(Heapfile *heapfile, PageID pid, Page *page) {
     fread(page->data, page->page_size, 1, heapfile->file_ptr);
 
     rewind(heapfile->file_ptr);
+}
+
+int try_read_page(Heapfile *heapfile, PageID pid, Page *page) {
+    if (out_of_bounds(pid, heapfile))
+        return -1;
+
+    read_page(heapfile, pid, page);
+    return 0;
 }
 
 void write_page(Page *page, Heapfile *heapfile, PageID pid) {
