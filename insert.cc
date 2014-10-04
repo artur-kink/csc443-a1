@@ -65,6 +65,8 @@ int main(int argc, char** argv){
         if (freeslots.size() > 0) {
             write_page(page, heap, current_id);
         }
+
+        current_id++;
     }
 
     free(page);
