@@ -1,5 +1,28 @@
 #include "csvhelper.h"
 
+int parse_record_id(const char* id, int* pid) {
+    // need more than five characters for a page id followed
+    // by a slot id
+    size_t len = strlen(id);
+    if (len <= 5) {
+        return -1;
+    }
+
+    int i;
+    char pid_str[len - 5 + 1];
+    for (i = 0; i < len - 5; i++) {
+        pid_str[i] = id[i];
+    }
+
+    char slot_str[6];
+    for (; i < len; i++) {
+        slot_str[i - (len - 5)] = id[i];
+    }
+
+    *pid = atoi(pid_str);
+    return atoi(slot_str);
+}
+
 void print_record(Record* record){
     //Iterate all records and print the 10 bytes as characters.
     for(int i = 0; i < record->size()-1; i++){
