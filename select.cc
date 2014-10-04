@@ -61,5 +61,7 @@ int main(int argc, char** argv) {
     printf("TOTAL NUMBER OF RECORDS SELECTED: %d\n", number_of_records_matching_query);
 
     fclose(heap_file);
+    free(heap);
+    free(recordi);
     return 0;
 }
