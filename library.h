@@ -93,10 +93,14 @@ int fixed_len_page_capacity(Page *page);
  */
 int fixed_len_page_directory_offset(Page *page);
 
+/**
+ * Get the indices of every free slot in the given page.
+ */
+std::vector<int> fixed_len_page_freeslot_indices(Page* page);
 /*
  * Calculate the free space (number of free slots) in the page
  */
-std::vector<int> fixed_len_page_freeslots(Page *page);
+int fixed_len_page_freeslots(Page *page);
 
 /**
  * Add a record to the page

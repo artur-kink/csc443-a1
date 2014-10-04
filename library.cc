@@ -43,7 +43,7 @@ int fixed_len_page_directory_offset(Page *page) {
     return page->page_size - ceil((floor((float)page->page_size/(float)page->slot_size))/8);
 }
 
-std::vector<int> fixed_len_page_freeslots(Page *page) {
+std::vector<int> fixed_len_page_freeslot_indices(Page *page) {
     std::vector<int> freeslots;
 
     //Get directory.
@@ -61,6 +61,10 @@ std::vector<int> fixed_len_page_freeslots(Page *page) {
     }
 
     return freeslots;
+}
+
+int fixed_len_page_freeslots(Page* page){
+    return fixed_len_page_freeslot_indices(page).size();
 }
 
 int add_fixed_len_page(Page *page, Record *r) {
@@ -301,7 +305,7 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     int offset_of_directory_entry = sizeof(int) + sizeof(int) * 2 * slot_index;
     fseek(heapfile->file_ptr, offset_to_directory(heap_id, heapfile->page_size) + offset_of_directory_entry + sizeof(int), SEEK_SET);
 
-    int free_space_in_page = fixed_len_page_freeslots(page).size() * record_size;
+    int free_space_in_page = fixed_len_page_freeslots(page) * record_size;
     fwrite(&free_space_in_page, sizeof(int), 1, heapfile->file_ptr);
 
     rewind(heapfile->file_ptr);

@@ -47,7 +47,7 @@ int main(int argc, char** argv){
         }
 
         // insert a record into each free slot, short-circuit if we run out
-        std::vector<int> freeslots = fixed_len_page_freeslots(page);
+        std::vector<int> freeslots = fixed_len_page_freeslot_indices(page);
         for (int i = 0; i < freeslots.size(); i++) {
             write_fixed_len_page(page, freeslots[i], records[records_exhausted]);
             records_exhausted++;
