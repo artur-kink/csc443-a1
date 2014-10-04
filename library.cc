@@ -55,7 +55,7 @@ std::vector<int> fixed_len_page_freeslots(Page *page) {
         if(i > 0 && i%8 == 0)
             directory++;
 
-        if(directory >> (i%8) == 0){
+        if((directory & (1 << (i%8))) == 0){
             freeslots.push_back(i);
         }
     }
@@ -99,8 +99,10 @@ void write_fixed_len_page(Page *page, int slot, Record *r) {
 
     //Update directory, set as written.
     unsigned char directory = (unsigned char)*directory_offset;
+    printf("directory value before insert %u\n", directory);
     directory |= 1 << (slot%8);
     memcpy(directory_offset, &directory, 1);
+    printf("directory value after insert %u\n", directory);
 
     //Write record to slot.
     unsigned char* slot_ptr = ((unsigned char*)page->data) + page->slot_size*slot;
@@ -360,21 +362,24 @@ Record RecordIterator::next() {
 }
 
 bool RecordIterator::hasNext() {
-    while (this->current_slot < fixed_len_page_capacity(this->current_page)) {
-        char* offset_direct_of_current_slot = ((char*)this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + (char)floor(this->current_slot / 8);
-        int directory_bit_for_slot = (int)(*offset_direct_of_current_slot) >> ((this->current_slot) % 8);
-        if ((directory_bit_for_slot != 0)) {
+    while (true) {
+        while (this->current_slot < fixed_len_page_capacity(this->current_page)) {
+            int dir_slot_offset = *(int*) (((char*)this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + (char)floor(this->current_slot / 8));
+            int directory_bit_for_slot = ((dir_slot_offset >> (current_slot % 8)) & 1);
+            if ((directory_bit_for_slot != 0)) {
+                break;
+            }
+            this->current_slot++;
+        }
+        // If we are above the slot capacity, we read in the next page.
+        if (this->current_slot == fixed_len_page_capacity(this->current_page)) {
+            this->current_slot = 0;
+            this->current_page_id++;
+
+            this->current_page_id = seek_page(this->current_page, this->current_directory_page, this->current_page_id, this->heap, true);
+        } else {
             break;
         }
-        this->current_slot++;
-    }
-
-    // If we are above the slot capacity, we read in the next page.
-    if (this->current_slot == fixed_len_page_capacity(this->current_page)) {
-        this->current_slot = 0;
-        this->current_page_id++;
-
-        this->current_page_id = seek_page(this->current_page, this->current_directory_page, this->current_page_id, this->heap, true);
     }
 
     return this->current_page_id != -1;
