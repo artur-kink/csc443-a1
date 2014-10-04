@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
             FILE* attr_file = attr_files[j];
 
             fwrite(&i, sizeof(int), 1, attr_file);
-            fwrite(&attr_value, sizeof(char), sizeof(attr_value), attr_file);
+            fwrite(attr_value, sizeof(char), attribute_len, attr_file);
         }
     }
 
