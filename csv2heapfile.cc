@@ -33,6 +33,8 @@ int main(int argc, char** argv){
     FILE* heap_file = fopen(argv[2], "w+b");
     if(!heap_file){
         printf("Failed to open heap file to write to: %s\n", argv[2]);
+        fclose(heap_file);
+        free(heap);
         return 3;
     }
     init_heapfile(heap, atoi(argv[3]), heap_file);
@@ -58,6 +60,7 @@ int main(int argc, char** argv){
             add_fixed_len_page(page, records.at(i));
         }
     }
+
     //Write our final page to heap.
     write_page(page, heap, page_id);
 

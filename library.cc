@@ -24,7 +24,11 @@ void init_fixed_len_page(Page *page, int page_size, int slot_size) {
     page->data = malloc(page_size);
 
     // Create directory and set directory to empty.
-    memset((unsigned char*)page->data + fixed_len_page_directory_offset(page), 0, page->page_size - fixed_len_page_directory_offset(page));
+    memset(get_directory(page), 0, page->page_size - fixed_len_page_directory_offset(page));
+}
+
+unsigned char* get_directory(Page* page){
+    return (unsigned char*)page->data + fixed_len_page_directory_offset(page);
 }
 
 void free_fixed_len_page(Page* page){
@@ -38,16 +42,23 @@ int fixed_len_page_capacity(Page *page) {
     return (fixed_len_page_directory_offset(page))/page->slot_size;
 }
 
+bool is_freeslot(Page* page, int slot){
+    unsigned char directory = *get_directory(page);
+    directory += slot / 8;
+
+    return (directory & (1 << (slot % 8))) == 0;
+}
+
 int fixed_len_page_directory_offset(Page *page) {
     // Calculate the byte offset where the directory starts.
     return page->page_size - ceil((floor((float)page->page_size/(float)page->slot_size))/8);
 }
 
-std::vector<int> fixed_len_page_freeslots(Page *page) {
+std::vector<int> fixed_len_page_freeslot_indices(Page *page) {
     std::vector<int> freeslots;
 
     //Get directory.
-    unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
+    unsigned char* directory_offset = get_directory(page);
 
     //Loop over directory to see which records are free.
     for(int i = 0; i < fixed_len_page_capacity(page); i++) {
@@ -63,8 +74,12 @@ std::vector<int> fixed_len_page_freeslots(Page *page) {
     return freeslots;
 }
 
+int fixed_len_page_freeslots(Page* page){
+    return fixed_len_page_freeslot_indices(page).size();
+}
+
 int add_fixed_len_page(Page *page, Record *r) {
-    unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
+    unsigned char* directory_offset = get_directory(page);
 
     //Iterate slots directory to find a free one.
     for(int i = 0; i < fixed_len_page_capacity(page); i++){
@@ -94,11 +109,11 @@ void write_fixed_len_page(Page *page, int slot, Record *r) {
         return;
 
     //Get byte position of slot in the directory.
-    unsigned char* directory_offset = ((unsigned char*)page->data) + fixed_len_page_directory_offset(page);
+    unsigned char* directory_offset = get_directory(page);
     directory_offset += slot/8;
 
     //Update directory, set as written.
-    unsigned char directory = (unsigned char)*directory_offset;
+    unsigned char directory = *directory_offset;
     printf("directory value before insert %u\n", directory);
     directory |= 1 << (slot%8);
     memcpy(directory_offset, &directory, 1);
@@ -243,6 +258,14 @@ PageID alloc_page(Heapfile *heapfile) {
     return -1;
 }
 
+bool out_of_bounds(PageID pid, Heapfile* heap) {
+    fseek(heap->file_ptr, 0, SEEK_END);
+    int file_length = ftell(heap->file_ptr);
+    fseek(heap->file_ptr, 0, SEEK_SET);
+
+    return pid < 0 || offset_of_pid(pid, heap->page_size) > file_length;
+}
+
 PageID heap_id_of_page(PageID pid, int page_size) {
     return floor(pid / number_of_pages_in_heap_directory(page_size));
 }
@@ -272,6 +295,14 @@ void read_page(Heapfile *heapfile, PageID pid, Page *page) {
     rewind(heapfile->file_ptr);
 }
 
+int try_read_page(Heapfile *heapfile, PageID pid, Page *page) {
+    if (out_of_bounds(pid, heapfile))
+        return -1;
+
+    read_page(heapfile, pid, page);
+    return 0;
+}
+
 void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 
     // look above.
@@ -285,7 +316,7 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     int offset_of_directory_entry = sizeof(int) + sizeof(int) * 2 * slot_index;
     fseek(heapfile->file_ptr, offset_to_directory(heap_id, heapfile->page_size) + offset_of_directory_entry + sizeof(int), SEEK_SET);
 
-    int free_space_in_page = fixed_len_page_freeslots(page).size() * record_size;
+    int free_space_in_page = fixed_len_page_freeslots(page) * record_size;
     fwrite(&free_space_in_page, sizeof(int), 1, heapfile->file_ptr);
 
     rewind(heapfile->file_ptr);
@@ -305,7 +336,7 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
     // next heap id is initialized when we read the first directory page
     PageID next_heap_id = -1;
 
-    while (true) {
+    do {
         PageID last_page_id = last_pid_of_directory(heap_id, page_size);
 
         if ((current_pid == last_pid_of_directory(heap_id - 1, page_size)) || current_pid == 0) {
@@ -326,12 +357,9 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
                 return current_pid;
             }
         }
-        // We have reached the end of the last directory, time to bail
-        if (next_heap_id <= 0 && current_pid == last_pid_of_directory(heap_id, page_size)) {
-            break;
-        }
+
         heap_id++;
-    }
+    } while (next_heap_id > 0);
 
     return -1;
 }

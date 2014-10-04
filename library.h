@@ -79,6 +79,11 @@ void fixed_len_read(void *buf, int size, Record *record);
 void init_fixed_len_page(Page *page, int page_size, int slot_size);
 
 /**
+ * Get the start of the record directory of the given page.
+ */
+unsigned char* get_directory(Page* page);
+
+/**
  * Release an allocated page from memory.
  */
 void free_fixed_len_page(Page* page);
@@ -93,10 +98,20 @@ int fixed_len_page_capacity(Page *page);
  */
 int fixed_len_page_directory_offset(Page *page);
 
+/**
+ * Return whether or not the given slot is free.
+ */
+bool is_freeslot(Page *page, int slot);
+
+/**
+ * Get the indices of every free slot in the given page.
+ */
+std::vector<int> fixed_len_page_freeslot_indices(Page* page);
+
 /*
  * Calculate the free space (number of free slots) in the page
  */
-std::vector<int> fixed_len_page_freeslots(Page *page);
+int fixed_len_page_freeslots(Page *page);
 
 /**
  * Add a record to the page
@@ -132,6 +147,11 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file);
 PageID alloc_page(Heapfile *heapfile);
 
 /**
+ * Return whether or not the provided pid is out of bounds.
+ */
+bool out_of_bounds(PageID pid, Heapfile heap);
+
+/**
  * Return the offset to the begining of a heap directory given it's id and a page size.
  */
 int offset_to_directory(int directory_id, int page_size);
@@ -150,6 +170,11 @@ int offset_of_pid(PageID pid, int page_size);
  * Read a page into memory
  */
 void read_page(Heapfile *heapfile, PageID pid, Page *page);
+
+/**
+ * Read a page into memory. Return -1 if the page does not exist.
+ */
+int try_read_page(Heapfile *heapfile, PageID pid, Page *page);
 
 /**
  * Read a directory page into memory

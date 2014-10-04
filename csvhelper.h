@@ -1,7 +1,13 @@
 #include <stdio.h>
+#include <string.h>
 #include <vector>
 
 #include "library.h"
+
+/**
+ * Parse the slot number and pid of a record id string.
+ */
+int parse_record_id(const char* id, int* pid);
 
 /**
  * Print given record as a csv.

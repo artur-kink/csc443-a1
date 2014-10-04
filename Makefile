@@ -32,8 +32,8 @@ insert: insert.cc library.o csvhelper.o
 update: update.cc library.o csvhelper.o
 	$(CC) -o $@ $< library.o csvhelper.o
 
-delete: delete.cc library.o
-	$(CC) -o $@ $< library.o
+delete: delete.cc library.o csvhelper.o
+	$(CC) -o $@ $< library.o csvhelper.o
 
 select: select.cc library.o csvhelper.o
 	$(CC) -o $@ $< library.o csvhelper.o
