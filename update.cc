@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
     if (argc != 6) {
-        printf("Usage: %s <heapfile> <record_id> <attribute_id> <new_value> <page_size>", argv[0]);
+        fprintf(stderr, "Usage: %s <heapfile> <record_id> <attribute_id> <new_value> <page_size>", argv[0]);
         return 1;
     }
 
@@ -13,14 +13,23 @@ int main(int argc, char** argv) {
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
     FILE* heap_file = fopen(argv[1], "r+b");
     if (!heap_file) {
-        printf("Failed to open heap file: %s\n", argv[1]);
+        fprintf(stderr, "Failed to open heap file: %s\n", argv[1]);
         fclose(heap_file);
         free(heap);
         return 2;
     }
 
-    // read in rest of the arguments
-    int record_id = atoi(argv[2]);
+    // read in the record id
+    int pid;
+    int slot = parse_record_id(argv[2], &pid);
+    if (slot == -1) {
+        fprintf(stderr, "Invalid record id: %s\n", argv[2]);
+        fclose(heap_file);
+        free(heap);
+        return 3;
+    }
+
+    // read in the rest of the arguments
     int attr_index = atoi(argv[3]);
     char* new_value = argv[4];
     int page_size = atoi(argv[5]);
@@ -34,19 +43,15 @@ int main(int argc, char** argv) {
 
     Record *record = new Record;
 
-    // extract info from record id about what page and slot we're operating on
-    int records_per_page = fixed_len_page_capacity(page);
-    int pid = record_id / records_per_page;
-    int slot = record_id % records_per_page;
-
     // read in that page
     if (try_read_page(heap, pid, page) == -1) {
-        printf("Record id out of bounds: %d\n", record_id);
+        fprintf(stderr, "Page id out of bounds: %d\n", pid);
         free(record);
         fclose(heap_file);
         free(heap);
         free(page);
-        return 3;
+        return 4;
+    }
     }
 
     // read in the record's contents, swap in the new attribute
