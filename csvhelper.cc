@@ -32,13 +32,17 @@ void print_record(Record* record){
     printf("%.10s\n", record->at(record->size()-1));
 }
 
-void read_records(const char* file, std::vector<Record*>* records){
+int read_records(const char* file, std::vector<Record*>* records){
     FILE* csvfile = fopen(file, "r");
+    if (!csvfile)
+        return -1;
     
     while(!feof(csvfile)){
+
         //Initialize new record.
         Record* record = new Record;
         int i = 0;
+
         //Read all attributes into record.
         for(i = 0; i < num_attributes; i++){
             char* attribute = (char*)malloc(attribute_len);
@@ -55,4 +59,6 @@ void read_records(const char* file, std::vector<Record*>* records){
             records->push_back(record);
         }
     }
+
+    return 0;
 }

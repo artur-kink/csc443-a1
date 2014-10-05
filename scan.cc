@@ -6,14 +6,14 @@
  */
 int main(int argc, char** argv){
     if(argc != 3){
-        printf("Usage: scan <heap_file> <page_size>\n");
+        fprintf(stderr, "Usage: %s <heap_file> <page_size>\n", argv[0]);
         return 1;
     }
 
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
     FILE* heap_file = fopen(argv[1], "rb");
     if(!heap_file){
-        printf("Failed to open heap file: %s\n", argv[1]);
+        fprintf(stderr, "Failed to open heap file: %s\n", argv[1]);
         free(heap);
         fclose(heap_file);
         return 2;

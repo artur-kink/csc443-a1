@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
     if (argc != 4) {
-        printf("Usage: %s <heapfile> <record_id> <page_size>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <heapfile> <record_id> <page_size>\n", argv[0]);
         return 1;
     }
 
@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
     FILE* heap_file = fopen(argv[1], "r+b");
     if (!heap_file) {
-        printf("Failed to open heap file: %s\n", argv[1]);
+        fprintf(stderr, "Failed to open heap file: %s\n", argv[1]);
         fclose(heap_file);
         free(heap);
         return 2;
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     init_fixed_len_page(page, page_size, record_size);
 
     if (try_read_page(heap, pid, page) == -1) {
-        printf("Page id out of bounds: %d\n", pid);
+        fprintf(stderr, "Page id out of bounds: %d\n", pid);
         free(page);
         fclose(heap_file);
         free(heap);

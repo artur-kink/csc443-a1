@@ -17,4 +17,4 @@ void print_record(Record* record);
 /**
  * Read records from given file name into a Record vector.
  */
-void read_records(const char* file, std::vector<Record*>* records);
+int read_records(const char* file, std::vector<Record*>* records);

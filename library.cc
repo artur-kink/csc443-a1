@@ -43,9 +43,7 @@ int fixed_len_page_capacity(Page *page) {
 }
 
 bool is_freeslot(Page* page, int slot){
-    unsigned char directory = *get_directory(page);
-    directory += slot / 8;
-
+    unsigned char directory = *(get_directory(page) + slot / 8);
     return (directory & (1 << (slot % 8))) == 0;
 }
 
@@ -62,9 +60,10 @@ std::vector<int> fixed_len_page_freeslot_indices(Page *page) {
 
     //Loop over directory to see which records are free.
     for(int i = 0; i < fixed_len_page_capacity(page); i++) {
-        unsigned char directory = *directory_offset;
         if(i > 0 && i%8 == 0)
-            directory++;
+            directory_offset++;
+
+        unsigned char directory = *directory_offset;
 
         if((directory & (1 << (i%8))) == 0){
             freeslots.push_back(i);
@@ -83,9 +82,9 @@ int add_fixed_len_page(Page *page, Record *r) {
 
     //Iterate slots directory to find a free one.
     for(int i = 0; i < fixed_len_page_capacity(page); i++){
-        if(i > 0 && i%8 == 0){
-            directory_offset += 1;
-        }
+        if(i > 0 && i%8 == 0)
+            directory_offset++;
+
         unsigned char directory = *directory_offset;
 
         if(directory >> (i%8) == 0){
@@ -154,7 +153,8 @@ PageID last_pid_of_directory(int directory_id, int page_size) {
 void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
     int number_of_pages_in_heap = number_of_pages_in_heap_directory(page_size);
 
-    // We can use 0 to point to no other directory? Otherwise we can use a hid (pid but for heap directories?)
+    // A next heap id of 0 indicates that there are no more directory pages
+    // after this one.
     int next_directory_heap_file_id = 0;
     fwrite(&next_directory_heap_file_id, sizeof(int), 1, file);
 
@@ -167,7 +167,7 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
         fwrite(&page_size, sizeof(int), 1, file);
     }
 
-    // I assume we want to do this? But maybe I'm just used to writing files in python.
+    // I assume we want to rewind the file? But maybe I'm just used to writing files in python.
     rewind(file);
     heapfile->page_size = page_size;
     heapfile->file_ptr = file;
@@ -324,7 +324,7 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
 }
 
 PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, bool should_be_occupied) {
-    if (feof(heap->file_ptr))
+    if (out_of_bounds(start_pid, heap))
         return -1;
 
     int page_size = heap->page_size;
