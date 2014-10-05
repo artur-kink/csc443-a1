@@ -352,7 +352,7 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
             int freespace = *(int*) (dp_data + page_offset + sizeof(int));
             int pid = *(int*) (dp_data + page_offset);
 
-            if ((should_be_occupied && freespace < record_size) || (!should_be_occupied && freespace >= record_size)) {
+            if ((should_be_occupied && freespace < page_size) || (!should_be_occupied && freespace >= record_size)) {
                 read_page(heap, current_pid, page);
                 return current_pid;
             }
