@@ -1,0 +1,24 @@
+#!/bin/bash
+
+echo "Generating test files."
+
+csvsizes=(10 100 1000 10000)
+
+for i in "${csvsizes[@]}"
+do
+	file="rand$i.csv"
+	if ! [ -e $file ]
+	then
+		python mkcsv.py $file $i
+	fi
+
+	page_file="rand$1.page"
+	page_sizes=(1001, 8001, 16002, 32004)
+	for p in "${page_sizes[@]}"
+	do
+		write_fixed_len_pages $file $page_file $p
+		#read_fixed_len_page $page_file $p
+	done
+
+done
+
