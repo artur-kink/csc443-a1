@@ -149,7 +149,7 @@ PageID alloc_page(Heapfile *heapfile);
 /**
  * Return whether or not the provided pid is out of bounds.
  */
-bool out_of_bounds(PageID pid, Heapfile heap);
+bool out_of_bounds(PageID pid, Heapfile* heap);
 
 /**
  * Return the offset to the begining of a heap directory given it's id and a page size.
