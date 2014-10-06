@@ -120,6 +120,28 @@ do
     done
 done
 
+echo ""
+echo "Testing select3"
+echo -e "Records\tPage\tStart\tEnd\tRead\tSelected"
+for i in ${csvsizes[@]}
+do
+    for p in ${page_sizes[@]}
+    do
+        col_file=$(echo "rand_"$i"_"$p".col")
+        for letter in {A..Z}
+        do
+            start="AAAAA"
+            end=$(echo $letter$letter$letter$letter$letter)
+            result=$(./select3 $col_file 0 1 $start $end $p | tail -n 3)
+            read_time=$(echo "$result" | head -n 1)
+            read_time=${read_time:6}
+            selected=$(echo "$result" | tail -n 1)
+            selected=${selected:34}
+            echo -e "$i\t$p\t$start\t$end\t$read_time\t$selected"
+        done
+    done
+done
+
 echo "Cleaning up..."
 rm *.heap
 rm *.page
