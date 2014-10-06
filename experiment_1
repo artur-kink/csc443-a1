@@ -1,26 +1,87 @@
 #!/bin/bash
 
-echo "Generating tests."
-echo -e "Records\tPage\tWrite\tRead"
-csvsizes=(100 1000 10000 100000 1000000)
+echo "Generating test CSVs."
+csvsizes=(100 1000 10000)
+page_sizes=(1001 8001 16002 32004 64008)
 
-for i in "${csvsizes[@]}"
+for i in ${csvsizes[@]}
 do
     file="rand$i.csv"
     if ! [ -e $file ]
     then
-        python mkcsv.py $file $i >/dev/null
+        python mkcsv.py $file $i
     fi
+done
 
-    page_file="rand$i.page"
-    page_sizes=(1001 8001 16002 32004 64008)
-    for p in "${page_sizes[@]}"
+echo ""
+echo "Testing write_fixed_len_pages and read_fixed_len_page"
+echo -e "Records\tPage\tWrite\tRead"
+for i in ${csvsizes[@]}
+do
+    csv_file="rand$i.csv"
+    for p in ${page_sizes[@]}
     do
-        write_time=$(./write_fixed_len_pages $file $page_file $p | tail -n 1)
+        page_file=$(echo "rand_"$i"_"$p".page")
+        write_time=$(./write_fixed_len_pages $csv_file $page_file $p | tail -n 1)
         write_time=${write_time:6}
         read_time=$(./read_fixed_len_page $page_file $p | tail -n 1)
         read_time=${read_time:6}
         echo -e "$i\t$p\t$write_time\t$read_time"
     done
-
 done
+
+echo ""
+echo "Comparing page and csv size"
+echo -e "Records\tPage\t.csv\t.page"
+for i in ${csvsizes[@]}
+do
+    csv_file="rand$i.csv"
+    csv_size=$(stat -c%s $csv_file)
+    for p in ${page_sizes[@]}
+    do
+        page_file=$(echo "rand_"$i"_"$p".page")
+        page_size=$(stat -c%s $page_file)
+        echo -e "$i\t$p\t$csv_size\t$page_size"
+    done
+done
+
+echo ""
+echo "Testing csv2heapfile"
+echo -e "Records\tPage\tWrite"
+for i in ${csvsizes[@]}
+do
+    csv_file="rand$i.csv"
+    for p in ${page_sizes[@]}
+    do
+        heap_file=$(echo "rand_"$i"_"$p".heap")
+        write_time=$(./csv2heapfile $csv_file $heap_file $p | tail -n 1)
+        write_time=${write_time:6}
+        echo -e "$i\t$p\t$write_time"
+    done
+done
+
+echo ""
+echo "Testing select"
+echo -e "Records\tPage\tStart\tEnd\tRead\tSelected"
+for i in ${csvsizes[@]}
+do
+    for p in ${page_sizes[@]}
+    do
+        heap_file=$(echo "rand_"$i"_"$p".heap")
+        for letter in {A..Z}
+        do
+            start="AAAAA"
+            end=$(echo $letter$letter$letter$letter$letter)
+            result=$(./select $heap_file 0 $start $end $p | tail -n 3)
+            read_time=$(echo "$result" | head -n 1)
+            read_time=${read_time:6}
+            selected=$(echo "$result" | tail -n 1)
+            selected=${selected:34}
+            echo -e "$i\t$p\t$start\t$end\t$read_time\t$selected"
+        done
+    done
+done
+
+echo "Cleaning up..."
+#rm *.heap
+#rm *.page
