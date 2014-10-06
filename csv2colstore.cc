@@ -1,5 +1,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/timeb.h>
 
 #include "csvhelper.h"
 
@@ -33,8 +34,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    printf("opening attr files\n");
-
     // open all the attribute files for the column store
     FILE* attr_files[num_attributes];
     char attr_file_name[100];
@@ -55,13 +54,15 @@ int main(int argc, char** argv) {
         attr_files[i] = attr_file;
     }
 
-    printf("running through records\n");
+    //Record start time of program.
+    struct timeb t;
+    ftime(&t);
+    long start_ms = t.time * 1000 + t.millitm;
 
     // run through the records and flush each attribute to its corresponding
     // file in the column store directory
     for (int i = 0; i < records.size(); i++) {
         Record* record = records[i];
-
         for (int j = 0; j < num_attributes; j++) {
             V attr_value = (*record)[j];
             FILE* attr_file = attr_files[j];
@@ -70,6 +71,11 @@ int main(int argc, char** argv) {
             fwrite(attr_value, sizeof(char), attribute_len, attr_file);
         }
     }
+
+    //Calculate program end time.
+    ftime(&t);
+    long end_ms = t.time * 1000 + t.millitm;
+    printf("TIME: %lu\n", end_ms - start_ms);
 
     // close all our files
     for (int i = 0; i < num_attributes; i++) {
