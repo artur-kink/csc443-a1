@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
 
         attr_files[i] = attr_file;
     }
-    
+
     //Record start time of program.
     struct timeb t;
     ftime(&t);
@@ -63,7 +63,6 @@ int main(int argc, char** argv) {
     // file in the column store directory
     for (int i = 0; i < records.size(); i++) {
         Record* record = records[i];
-
         for (int j = 0; j < num_attributes; j++) {
             V attr_value = (*record)[j];
             FILE* attr_file = attr_files[j];
@@ -77,7 +76,7 @@ int main(int argc, char** argv) {
     ftime(&t);
     long end_ms = t.time * 1000 + t.millitm;
     printf("TIME: %lu\n", end_ms - start_ms);
-    
+
     // close all our files
     for (int i = 0; i < num_attributes; i++) {
         fclose(attr_files[i]);

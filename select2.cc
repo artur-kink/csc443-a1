@@ -34,13 +34,12 @@ int main(int argc, char** argv) {
     //Find all records matching query.
     int number_of_records_matching_query = 0;
     int total_number_of_records = 0;
-    while (!feof(attr_file)) {
+    char attr[attribute_len + 1];
+    attr[attribute_len] = '\0';
 
-        // skip over the tuple number since we don't need it
-        fseek(attr_file, sizeof(int), SEEK_CUR);
-
-        char attr[attribute_len];
-        fread(attr, 1, attribute_len, attr_file);
+    // seek past first
+    fseek(attr_file, sizeof(int), SEEK_SET);
+    while (fread(attr, sizeof(char), attribute_len, attr_file) != 0) {
 
         //Check if attribute in selection range.
         if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
@@ -48,6 +47,8 @@ int main(int argc, char** argv) {
             number_of_records_matching_query++;
         }
         total_number_of_records++;
+        // skip over the tuple number since we don't need it
+        fseek(attr_file, sizeof(int), SEEK_CUR);
     }
 
     //Calculate program runtime.
