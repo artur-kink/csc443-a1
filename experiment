@@ -82,6 +82,47 @@ do
     done
 done
 
+
+echo ""
+echo "Testing csv2colstore"
+echo -e "Records\tPage\tWrite"
+for i in ${csvsizes[@]}
+do
+    csv_file="rand$i.csv"
+    for p in ${page_sizes[@]}
+    do
+        col_file=$(echo "rand_"$i"_"$p".col")
+        write_time=$(./csv2colstore $csv_file $col_file $p | tail -n 1)
+        write_time=${write_time:6}
+        echo -e "$i\t$p\t$write_time"
+    done
+done
+
+echo ""
+echo "Testing select2"
+echo -e "Records\tPage\tStart\tEnd\tRead\tSelected"
+for i in ${csvsizes[@]}
+do
+    for p in ${page_sizes[@]}
+    do
+        col_file=$(echo "rand_"$i"_"$p".col")
+        for letter in {A..Z}
+        do
+            start="AAAAA"
+            end=$(echo $letter$letter$letter$letter$letter)
+            result=$(./select2 $col_file 0 $start $end $p | tail -n 3)
+            read_time=$(echo "$result" | head -n 1)
+            read_time=${read_time:6}
+            selected=$(echo "$result" | tail -n 1)
+            selected=${selected:34}
+            echo -e "$i\t$p\t$start\t$end\t$read_time\t$selected"
+        done
+    done
+done
+
 echo "Cleaning up..."
-#rm *.heap
-#rm *.page
+rm *.heap
+rm *.page
+rm -rf *.col
+
+echo "Finished"
