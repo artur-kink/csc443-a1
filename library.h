@@ -55,6 +55,7 @@ typedef struct {
 typedef struct {
     FILE *file_ptr;
     int page_size;
+    int slot_size;
 } Heapfile;
 
 /**
