@@ -34,7 +34,9 @@ int main(int argc, char** argv) {
 
     //Initialize heap and record iterator from file.
     Heapfile* heap = (Heapfile*) malloc(sizeof (Heapfile));
-    init_heapfile(heap, atoi(argv[5]), heap_file);
+    heap->page_size = atoi(argv[5]);
+    heap->slot_size = record_size;
+    heap->file_ptr = heap_file;
     RecordIterator* recordi = new RecordIterator(heap);
 
     //Find all records matching query.

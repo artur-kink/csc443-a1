@@ -26,29 +26,31 @@ int main(int argc, char** argv) {
         return 3;
     }
 
+    //
     //Record Start Time
     struct timeb t;
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
 
+    //Initialize heap and record iterator from file.
+    Heapfile* heap = (Heapfile*) malloc(sizeof (Heapfile));
+    heap->page_size = atoi(argv[5]);
+    heap->slot_size = 2*attribute_len;
+    heap->file_ptr = attr_file;
+    RecordIterator* recordi = new RecordIterator(heap);
+
     //Find all records matching query.
     int number_of_records_matching_query = 0;
     int total_number_of_records = 0;
-    char attr[attribute_len + 1];
-    attr[attribute_len] = '\0';
-
-    // seek past first
-    fseek(attr_file, sizeof(int), SEEK_SET);
-    while (fread(attr, sizeof(char), attribute_len, attr_file) != 0) {
+    while (recordi->hasNext()) {
+        Record next_record = recordi->next();
 
         //Check if attribute in selection range.
-        if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
-            printf("%.5s\n", attr);
+        if(strcmp(next_record.at(attribute_id), start) >= 0 && strcmp(next_record.at(attribute_id), end) <= 0){
+            printf("%.5s\n", next_record.at(attribute_id));
             number_of_records_matching_query++;
         }
         total_number_of_records++;
-        // skip over the tuple number since we don't need it
-        fseek(attr_file, sizeof(int), SEEK_CUR);
     }
 
     //Calculate program runtime.
@@ -61,6 +63,7 @@ int main(int argc, char** argv) {
     printf("TOTAL NUMBER OF RECORDS SELECTED: %d\n", number_of_records_matching_query);
 
     fclose(attr_file);
-
+    free(heap);
+    free(recordi);
     return 0;
 }
