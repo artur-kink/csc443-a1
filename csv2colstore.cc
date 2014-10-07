@@ -1,6 +1,7 @@
 #include "library.h"
 #include "csvhelper.h"
 
+#include <sys/stat.h>
 #include <sys/timeb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +29,17 @@ int main(int argc, char** argv){
     if(records.size() == 0){
         fprintf(stderr, "No records in file: %s\n", argv[1]);
         return 3;
+    }
+
+    // make column store directory if it doesn't already exist
+    char* colstore_name = argv[2];
+    struct stat st = {0};
+
+    if (stat(colstore_name, &st) == -1) {
+        if (mkdir(colstore_name, 0700) == -1) {
+            fprintf(stderr, "Could not make column store directory: %s\n", colstore_name);
+            return 4;
+        }
     }
 
     //Record start time of program.
@@ -63,7 +75,7 @@ int main(int argc, char** argv){
         //Loop all records and add them to heap.
         for(int i = 0; i < records.size(); i++){
             printf("Record %d, %d: %s\n", i, j, records.at(i)->at(j));
-//            print_record(records.at(i));
+            // print_record(records.at(i));
 
             //If page is full, create new page in heap.
             if(add_fixed_len_page_colstore(page, records.at(i), j) == -1){
