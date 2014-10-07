@@ -79,10 +79,10 @@ int main(int argc, char** argv){
 
             }
 
-            Record r;
-            read_fixed_len_page(page, i % 8, &r);
-            printf("Result\n");
-            print_record(&r);
+//            Record r;
+//            read_fixed_len_page(page, i % 8, &r);
+//            printf("Result\n");
+//            print_record(&r);
         }
 
         //Write our final page to heap.
