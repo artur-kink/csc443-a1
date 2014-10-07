@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write);
+int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write, int record_id_to_write);
 
 /**
  * Takes a csv file and converts it to a heap file with given page sizes.
@@ -78,7 +78,7 @@ int main(int argc, char** argv){
             // print_record(records.at(i));
 
             //If page is full, create new page in heap.
-            if(add_fixed_len_page_colstore(page, records.at(i), j) == -1){
+            if(add_fixed_len_page_colstore(page, records.at(i), j, i) == -1){
 
                 printf("allocating new page\n");
                 //Write page back to heap.
@@ -87,7 +87,7 @@ int main(int argc, char** argv){
                 //Alloc new page and add record to it.
                 page_id = alloc_page(heap);
                 read_page(heap, page_id, page);
-                add_fixed_len_page_colstore(page, records.at(i), j);
+                add_fixed_len_page_colstore(page, records.at(i), j, i);
 
             }
 
@@ -109,7 +109,7 @@ int main(int argc, char** argv){
     return 0;
 }
 
-int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write) {
+int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write, int record_id_to_write) {
     unsigned char* directory_offset = get_directory(page);
 
     //Iterate slots directory to find a free one.
