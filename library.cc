@@ -113,10 +113,8 @@ void write_fixed_len_page(Page *page, int slot, Record *r) {
 
     //Update directory, set as written.
     unsigned char directory = *directory_offset;
-    printf("directory value before insert %u\n", directory);
     directory |= 1 << (slot%8);
     memcpy(directory_offset, &directory, 1);
-    printf("directory value after insert %u\n", directory);
 
     //Write record to slot.
     unsigned char* slot_ptr = ((unsigned char*)page->data) + page->slot_size*slot;
