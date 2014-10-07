@@ -116,7 +116,14 @@ int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write
             to_write.push_back(r->at(attribute_id_to_write));
 
             //Write record to page.
-            fixed_len_write(&to_write, ((char*)page->data) + i*page->slot_size);
+            //fixed_len_write(&to_write, ((char*)page->data) + i*page->slot_size);
+
+            char* buf = ((char*)page->data) + i*page->slot_size;
+
+            // It was looping too many times so I tried this.
+            for (int k = 0; k < 2; k++) {
+                 memcpy((buf + k*attribute_len), (&to_write)->at(k), attribute_len);
+            }
 
             //Update directory.
             directory |= 1 << (i%8);
