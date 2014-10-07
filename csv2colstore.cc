@@ -123,7 +123,7 @@ int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write
             Record to_write;
 
             char index[attribute_len];
-            sprintf(index, "%0*d", attribute_len, attribute_id_to_write);
+            sprintf(index, "%0*d", attribute_len, record_id_to_write);
             to_write.push_back(index);
             to_write.push_back(r->at(attribute_id_to_write));
 
