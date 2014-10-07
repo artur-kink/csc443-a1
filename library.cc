@@ -4,13 +4,13 @@ int fixed_len_sizeof(Record *record){
     return record_size;
 }
 
-void fixed_len_write(Record *record, void *buf) {
+__attribute__((weak)) void fixed_len_write(Record *record, void *buf) {
     for (int i = 0; i < num_attributes; i++) {
         memcpy(((char*)buf + i*attribute_len), record->at(i), attribute_len);
     }
 }
 
-void fixed_len_read(void *buf, int size, Record *record) {
+__attribute__((weak)) void fixed_len_read(void *buf, int size, Record *record) {
     for (int i = 0; i < num_attributes; i++) {
         V attr = (char *) buf + i*attribute_len;
         record->push_back(attr);
@@ -352,7 +352,7 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
             int freespace = *(int*) (dp_data + page_offset + sizeof(int));
             int pid = *(int*) (dp_data + page_offset);
 
-            if ((should_be_occupied && freespace < page_size) || (!should_be_occupied && freespace >= pahe->slot_size)) {
+            if ((should_be_occupied && freespace < page_size) || (!should_be_occupied && freespace >= page->slot_size)) {
                 read_page(heap, current_pid, page);
                 return current_pid;
             }
