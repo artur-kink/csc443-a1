@@ -3,6 +3,7 @@
 
 #include <sys/timeb.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /**
  * Takes a csv file and converts it to a heap file with given page sizes.
@@ -33,37 +34,48 @@ int main(int argc, char** argv){
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
 
+
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
-    //Open heap file where heap is stored.
-    FILE* heap_file = fopen(argv[2], "w+b");
-    if(!heap_file){
-        printf("Failed to open heap file to write to: %s\n", argv[2]);
-        fclose(heap_file);
-        free(heap);
-        return 4;
-    }
-    init_heapfile(heap, atoi(argv[3]), heap_file);
 
-    //Initialize first page.
-    PageID page_id = alloc_page(heap);
-    Page* page = (Page*)malloc(sizeof(Page));
-    read_page(heap, page_id, page);
+    for (int j = 0; j < num_attributes; j++) {
 
-    //Loop all records and add them to heap.
-    for(int i = 0; i < records.size(); i++){
-        printf("Record %d: ", i);
-        print_record(records.at(i));
+        char path[100] = "";
+        strcat(path, argv[2]);
+        strcat(path, "/");
+        // I thought itoa was a thing.
+        strcat(path,itoa(j));
 
-        //If page is full, create new page in heap.
-        if(add_fixed_len_page(page, records.at(i)) == -1){
+        //Open heap file where heap is stored.
+        FILE* heap_file = fopen(path, "w+b");
+        if(!heap_file){
+            printf("Failed to open heap file to write to: %s\n", argv[2]);
+            fclose(heap_file);
+            free(heap);
+            return 4;
+        }
+        init_heapfile(heap, atoi(argv[3]), heap_file);
+        heap->slot_size = 2 * attribute_len;
+        //Initialize first page.
+        PageID page_id = alloc_page(heap);
+        Page* page = (Page*)malloc(sizeof(Page));
+        read_page(heap, page_id, page);
 
-            //Write page back to heap.
-            write_page(page, heap, page_id);
+        //Loop all records and add them to heap.
+        for(int i = 0; i < records.size(); i++){
+            printf("Record %d: ", i);
+            print_record(records.at(i));
 
-            //Alloc new page and add record to it.
-            page_id = alloc_page(heap);
-            read_page(heap, page_id, page);
-            add_fixed_len_page(page, records.at(i));
+            //If page is full, create new page in heap.
+            if(add_fixed_len_page_colstore(page, records.at(i), j) == -1){
+
+                //Write page back to heap.
+                write_page(page, heap, page_id);
+
+                //Alloc new page and add record to it.
+                page_id = alloc_page(heap);
+                read_page(heap, page_id, page);
+                add_fixed_len_page_colstore(page, records.at(i), j);
+            }
         }
     }
 
@@ -78,16 +90,7 @@ int main(int argc, char** argv){
     return 0;
 }
 
-void fixed_len_write(Record *record, void *buf) {
-    int int_len = sizeof(int);
-    memcpy(((char*)buf), record->at(0), int_len);
-    memcpy(((char*)buf + int_len), record->at(1), attribute_len);
-}
-
-void fixed_len_read(void *buf, int size, Record *record) {
-    int int_len = sizeof(int);
-    V record_id = (char *) buf;
-    record->push_back(record_id);
-    V attr = (char *) buf + int_len;
-    record->push_back(attr);
+int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write) {
+    // Fill me in
+    return 0;
 }

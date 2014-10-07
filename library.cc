@@ -4,14 +4,14 @@ int fixed_len_sizeof(Record *record){
     return record_size;
 }
 
-__attribute__((weak)) void fixed_len_write(Record *record, void *buf) {
+void fixed_len_write(Record *record, void *buf) {
     for (int i = 0; i < num_attributes; i++) {
         memcpy(((char*)buf + i*attribute_len), record->at(i), attribute_len);
     }
 }
 
-__attribute__((weak)) void fixed_len_read(void *buf, int size, Record *record) {
-    for (int i = 0; i < num_attributes; i++) {
+void fixed_len_read(void *buf, int size, Record *record) {
+    for (int i = 0; i < size/attribute_len; i++) {
         V attr = (char *) buf + i*attribute_len;
         record->push_back(attr);
     }
