@@ -34,6 +34,7 @@ int main(int argc, char** argv){
     //init_heapfile(heap, atoi(argv[3]), heap_file);
 
     heap->page_size = atoi(argv[3]);
+    heap->slot_size = record_size;
     heap->file_ptr = heap_file;
 
     Page* page = (Page*)malloc(sizeof(Page*));

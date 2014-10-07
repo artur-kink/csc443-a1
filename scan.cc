@@ -20,6 +20,7 @@ int main(int argc, char** argv){
     }
 
     heap->page_size = atoi(argv[2]);
+    heap->slot_size = record_size;
     heap->file_ptr = heap_file;
 
     RecordIterator* recordi = new RecordIterator(heap);

@@ -4,13 +4,13 @@ int fixed_len_sizeof(Record *record){
     return record_size;
 }
 
-void fixed_len_write(Record *record, void *buf) {
+__attribute__((weak)) void fixed_len_write(Record *record, void *buf) {
     for (int i = 0; i < num_attributes; i++) {
         memcpy(((char*)buf + i*attribute_len), record->at(i), attribute_len);
     }
 }
 
-void fixed_len_read(void *buf, int size, Record *record) {
+__attribute__((weak)) void fixed_len_read(void *buf, int size, Record *record) {
     for (int i = 0; i < num_attributes; i++) {
         V attr = (char *) buf + i*attribute_len;
         record->push_back(attr);
@@ -175,7 +175,7 @@ void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
 
 PageID alloc_page(Heapfile *heapfile) {
     Page* new_page = (Page*)malloc(sizeof(Page));
-    init_fixed_len_page(new_page, heapfile->page_size, record_size);
+    init_fixed_len_page(new_page, heapfile->page_size, heapfile->slot_size);
 
     // See if there's a next directory page
     rewind(heapfile->file_ptr);
@@ -276,7 +276,7 @@ int offset_of_pid(PageID pid, int page_size) {
 }
 
 void read_directory_page(Heapfile *heapfile, PageID directory_id, Page *page) {
-    init_fixed_len_page(page, heapfile->page_size, record_size);
+    init_fixed_len_page(page, heapfile->page_size, heapfile->slot_size);
 
     // Seek to the correct spot
     fseek(heapfile->file_ptr, offset_to_directory(directory_id, heapfile->page_size), SEEK_SET);
@@ -286,7 +286,7 @@ void read_directory_page(Heapfile *heapfile, PageID directory_id, Page *page) {
 }
 
 void read_page(Heapfile *heapfile, PageID pid, Page *page) {
-    init_fixed_len_page(page, heapfile->page_size, record_size);
+    init_fixed_len_page(page, heapfile->page_size, heapfile->slot_size);
 
     // Seek to the correct spot
     fseek(heapfile->file_ptr, offset_of_pid(pid, heapfile->page_size), SEEK_SET);
@@ -316,7 +316,7 @@ void write_page(Page *page, Heapfile *heapfile, PageID pid) {
     int offset_of_directory_entry = sizeof(int) + sizeof(int) * 2 * slot_index;
     fseek(heapfile->file_ptr, offset_to_directory(heap_id, heapfile->page_size) + offset_of_directory_entry + sizeof(int), SEEK_SET);
 
-    int free_space_in_page = fixed_len_page_freeslots(page) * record_size;
+    int free_space_in_page = fixed_len_page_freeslots(page) * page->slot_size;
     fwrite(&free_space_in_page, sizeof(int), 1, heapfile->file_ptr);
 
     rewind(heapfile->file_ptr);
@@ -352,7 +352,7 @@ PageID seek_page(Page* page, Page* dir_page, PageID start_pid, Heapfile* heap, b
             int freespace = *(int*) (dp_data + page_offset + sizeof(int));
             int pid = *(int*) (dp_data + page_offset);
 
-            if ((should_be_occupied && freespace < page_size) || (!should_be_occupied && freespace >= record_size)) {
+            if ((should_be_occupied && freespace < page_size) || (!should_be_occupied && freespace >= page->slot_size)) {
                 read_page(heap, current_pid, page);
                 return current_pid;
             }
@@ -374,8 +374,8 @@ RecordIterator::RecordIterator(Heapfile *heapfile) {
     this->current_directory_page = (Page*)malloc(sizeof(Page));
     this->current_slot = 0;
 
-    init_fixed_len_page(this->current_page, heapfile->page_size, record_size);
-    init_fixed_len_page(this->current_directory_page, heapfile->page_size, record_size);
+    init_fixed_len_page(this->current_page, heapfile->page_size, heapfile->slot_size);
+    init_fixed_len_page(this->current_directory_page, heapfile->page_size, heapfile->slot_size);
 
     this->current_page_id = seek_page(this->current_page, this->current_directory_page, this->current_page_id, this->heap, true);
 }
