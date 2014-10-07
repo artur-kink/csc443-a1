@@ -1,86 +1,93 @@
-#include <sys/stat.h>
-#include <unistd.h>
-#include <sys/timeb.h>
-
+#include "library.h"
 #include "csvhelper.h"
 
-int main(int argc, char** argv) {
-    if (argc != 4) {
-        fprintf(stderr, "Usage: %s <csv_file> <colstore_name> <page_size>\n", argv[0]);
+#include <sys/timeb.h>
+#include <stdio.h>
+
+/**
+ * Takes a csv file and converts it to a heap file with given page sizes.
+ */
+int main(int argc, char** argv){
+    //Make sure all args are provided.
+    if(argc != 4){
+        fprintf(stderr, "Usage: %s <csv_file> <heapfile> <page_size>\n", argv[0]);
         return 1;
     }
 
-    // read records from CSV file
-    char* csv_file = argv[1];
+    //Load records from csv.
     std::vector<Record*> records;
-    int error = read_records(csv_file, &records);
+    int error = read_records(argv[1], &records);
     if (error) {
-        fprintf(stderr, "Could not read records from file: %s\n", csv_file);
+        fprintf(stderr, "Could not read records from file: %s\n", argv[1]);
         return 2;
     }
-    if (records.size() == 0) {
-        fprintf(stderr, "No records contained in file: %s\n", csv_file);
+
+    if(records.size() == 0){
+        fprintf(stderr, "No records in file: %s\n", argv[1]);
         return 3;
     }
 
-    // make column store directory if it doesn't already exist
-    char* colstore_name = argv[2];
-    struct stat st = {0};
-
-    if (stat(colstore_name, &st) == -1) {
-        if (mkdir(colstore_name, 0700) == -1) {
-            fprintf(stderr, "Could not make column store directory: %s\n", colstore_name);
-            return 4;
-        }
-    }
-
-    // open all the attribute files for the column store
-    FILE* attr_files[num_attributes];
-    char attr_file_name[100];
-    for (int i = 0; i < num_attributes; i++) {
-        printf("filename: %s/%d\n", colstore_name, i);
-        if (sprintf(attr_file_name, "%s/%d", colstore_name, i) < 0)  {
-            fprintf(stderr, "Could not create attribute filename %s/%d\n", colstore_name, i);
-            return 5;
-        }
-
-        printf("opening file %s\n", attr_file_name);
-
-        FILE* attr_file = fopen(attr_file_name, "w+b");
-        if (!attr_file) {
-            fprintf(stderr, "Could not open attribute file for writing %s\n", attr_file_name);
-        }
-
-        attr_files[i] = attr_file;
-    }
-
     //Record start time of program.
+    //We do not include parsing of the csv because that is irrelevant to our metrics.
     struct timeb t;
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
 
-    // run through the records and flush each attribute to its corresponding
-    // file in the column store directory
-    for (int i = 0; i < records.size(); i++) {
-        Record* record = records[i];
-        for (int j = 0; j < num_attributes; j++) {
-            V attr_value = (*record)[j];
-            FILE* attr_file = attr_files[j];
+    Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
+    //Open heap file where heap is stored.
+    FILE* heap_file = fopen(argv[2], "w+b");
+    if(!heap_file){
+        printf("Failed to open heap file to write to: %s\n", argv[2]);
+        fclose(heap_file);
+        free(heap);
+        return 4;
+    }
+    init_heapfile(heap, atoi(argv[3]), heap_file);
 
-            fwrite(&i, sizeof(int), 1, attr_file);
-            fwrite(attr_value, sizeof(char), attribute_len, attr_file);
+    //Initialize first page.
+    PageID page_id = alloc_page(heap);
+    Page* page = (Page*)malloc(sizeof(Page));
+    read_page(heap, page_id, page);
+
+    //Loop all records and add them to heap.
+    for(int i = 0; i < records.size(); i++){
+        printf("Record %d: ", i);
+        print_record(records.at(i));
+
+        //If page is full, create new page in heap.
+        if(add_fixed_len_page(page, records.at(i)) == -1){
+
+            //Write page back to heap.
+            write_page(page, heap, page_id);
+
+            //Alloc new page and add record to it.
+            page_id = alloc_page(heap);
+            read_page(heap, page_id, page);
+            add_fixed_len_page(page, records.at(i));
         }
     }
+
+    //Write our final page to heap.
+    write_page(page, heap, page_id);
 
     //Calculate program end time.
     ftime(&t);
     long end_ms = t.time * 1000 + t.millitm;
     printf("TIME: %lu\n", end_ms - start_ms);
 
-    // close all our files
-    for (int i = 0; i < num_attributes; i++) {
-        fclose(attr_files[i]);
-    }
-
     return 0;
+}
+
+void fixed_len_write(Record *record, void *buf) {
+    int int_len = sizeof(int);
+    memcpy(((char*)buf), record->at(0), int_len);
+    memcpy(((char*)buf + int_len), record->at(1), attribute_len);
+}
+
+void fixed_len_read(void *buf, int size, Record *record) {
+    int int_len = sizeof(int);
+    V record_id = (char *) buf;
+    record->push_back(record_id);
+    V attr = (char *) buf + int_len;
+    record->push_back(attr);
 }
