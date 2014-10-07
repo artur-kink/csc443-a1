@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write);
+
 /**
  * Takes a csv file and converts it to a heap file with given page sizes.
  */
@@ -40,19 +42,17 @@ int main(int argc, char** argv){
     for (int j = 0; j < num_attributes; j++) {
 
         char path[100] = "";
-        strcat(path, argv[2]);
-        strcat(path, "/");
-        // I thought itoa was a thing.
-        strcat(path,itoa(j));
+        sprintf(path, "%s/%d", argv[2], j);
 
         //Open heap file where heap is stored.
         FILE* heap_file = fopen(path, "w+b");
         if(!heap_file){
-            printf("Failed to open heap file to write to: %s\n", argv[2]);
+            printf("Failed to open heap file to write to: %s\n", path);
             fclose(heap_file);
             free(heap);
             return 4;
         }
+
         init_heapfile(heap, atoi(argv[3]), heap_file);
         heap->slot_size = 2 * attribute_len;
         //Initialize first page.
@@ -62,12 +62,13 @@ int main(int argc, char** argv){
 
         //Loop all records and add them to heap.
         for(int i = 0; i < records.size(); i++){
-            printf("Record %d: ", i);
-            print_record(records.at(i));
+            printf("Record %d, %d: %s\n", i, j, records.at(i)->at(j));
+//            print_record(records.at(i));
 
             //If page is full, create new page in heap.
             if(add_fixed_len_page_colstore(page, records.at(i), j) == -1){
 
+                printf("allocating new page\n");
                 //Write page back to heap.
                 write_page(page, heap, page_id);
 
@@ -75,12 +76,18 @@ int main(int argc, char** argv){
                 page_id = alloc_page(heap);
                 read_page(heap, page_id, page);
                 add_fixed_len_page_colstore(page, records.at(i), j);
-            }
-        }
-    }
 
-    //Write our final page to heap.
-    write_page(page, heap, page_id);
+            }
+
+            Record r;
+            read_fixed_len_page(page, i % 8, &r);
+            printf("Result\n");
+            print_record(&r);
+        }
+
+        //Write our final page to heap.
+        write_page(page, heap, page_id);
+    }
 
     //Calculate program end time.
     ftime(&t);
@@ -91,6 +98,33 @@ int main(int argc, char** argv){
 }
 
 int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write) {
-    // Fill me in
-    return 0;
+    unsigned char* directory_offset = get_directory(page);
+
+    //Iterate slots directory to find a free one.
+    for(int i = 0; i < fixed_len_page_capacity(page); i++){
+        if(i > 0 && i%8 == 0)
+            directory_offset++;
+
+        unsigned char directory = *directory_offset;
+
+        if(directory >> (i%8) == 0) {
+            Record to_write;
+
+            char index[attribute_len];
+            sprintf(index, "%0*d", attribute_len, attribute_id_to_write);
+            to_write.push_back(index);
+            to_write.push_back(r->at(attribute_id_to_write));
+
+            //Write record to page.
+            fixed_len_write(&to_write, ((char*)page->data) + i*page->slot_size);
+
+            //Update directory.
+            directory |= 1 << (i%8);
+            memcpy(directory_offset, &directory, 1);
+            return i;
+        }
+    }
+
+    //Reached here means we didn't find any free slots.
+    return -1;
 }
