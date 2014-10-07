@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
         Record next_record = recordi->next();
 
         //Check if attribute in selection range.
-        if(strcmp(next_record.at(attribute_id), start) >= 0 && strcmp(next_record.at(attribute_id), end) <= 0){
-            printf("%.5s\n", next_record.at(attribute_id));
+        if(strcmp(next_record.at(1), start) >= 0 && strcmp(next_record.at(1), end) <= 0){
+            printf("%.5s\n", next_record.at(1));
             number_of_records_matching_query++;
         }
         total_number_of_records++;
