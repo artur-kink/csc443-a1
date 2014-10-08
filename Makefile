@@ -2,7 +2,7 @@
 CC = g++
 RM = rm
 
-all: write_fixed_len_pages read_fixed_len_page csv2heapfile scan select insert update delete csv2colstore select2
+all: write_fixed_len_pages read_fixed_len_page csv2heapfile scan select insert update delete csv2colstore select2 select3
 
 library.o: library.cc library.h
 	$(CC) -o $@ -c $<
