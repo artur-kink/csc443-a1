@@ -47,8 +47,12 @@ int main(int argc, char** argv) {
     while (recordi->hasNext()) {
         Record next_record = recordi->next();
 
+        char attr[attribute_len+1];
+        strncpy(attr, next_record.at(1), attribute_len);
+        attr[attribute_len] = '\0';
+
         //Check if attribute in selection range.
-        if(strcmp(next_record.at(1), start) >= 0 && strcmp(next_record.at(1), end) <= 0){
+        if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
             matching_records.push_back(atoi(next_record.at(0)));
             number_of_records_matching_query++;
         }
