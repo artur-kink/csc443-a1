@@ -390,9 +390,11 @@ Record RecordIterator::next() {
 bool RecordIterator::hasNext() {
     while (true) {
         while (this->current_slot < fixed_len_page_capacity(this->current_page)) {
-            int dir_slot_offset = *(int*) (((char*)this->current_page->data) + fixed_len_page_directory_offset(this->current_page) + (char)floor(this->current_slot / 8));
-            int directory_bit_for_slot = ((dir_slot_offset >> (current_slot % 8)) & 1);
-            if ((directory_bit_for_slot != 0)) {
+            unsigned char* dir_slot_offset = get_directory(this->current_page);
+            for (int k = 0; k < floor(this->current_slot / 8); k++)
+                dir_slot_offset++;
+            unsigned char directory_byte_for_slot = *dir_slot_offset;
+            if ((directory_byte_for_slot >> (this->current_slot % 8) != 0)) {
                 break;
             }
             this->current_slot++;
