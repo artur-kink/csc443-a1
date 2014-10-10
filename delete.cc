@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
 
     // initialize our heapfile
     heap->page_size = page_size;
+    heap->slot_size = record_size;
     heap->file_ptr = heap_file;
 
     // initialize the page we'll be reading and writing to

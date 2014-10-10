@@ -34,7 +34,9 @@ int main(int argc, char** argv) {
 
     //Initialize heap and record iterator from file.
     Heapfile* heap = (Heapfile*) malloc(sizeof (Heapfile));
-    init_heapfile(heap, atoi(argv[5]), heap_file);
+    heap->page_size = atoi(argv[5]);
+    heap->slot_size = record_size;
+    heap->file_ptr = heap_file;
     RecordIterator* recordi = new RecordIterator(heap);
 
     //Find all records matching query.
@@ -44,8 +46,12 @@ int main(int argc, char** argv) {
         Record next_record = recordi->next();
 
         //Check if attribute in selection range.
-        if(strcmp(next_record.at(attribute_id), start) >= 0 && strcmp(next_record.at(attribute_id), end) <= 0){
-            printf("%.5s\n", next_record.at(attribute_id));
+        char attr[attribute_len+1];
+        strncpy(attr, next_record.at(attribute_id), attribute_len);
+        attr[attribute_len] = '\0';
+
+        if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
+            printf("%.5s\n", attr);
             number_of_records_matching_query++;
         }
         total_number_of_records++;

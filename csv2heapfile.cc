@@ -26,7 +26,7 @@ int main(int argc, char** argv){
         fprintf(stderr, "No records in file: %s\n", argv[1]);
         return 3;
     }
-    
+
     //Record start time of program.
     //We do not include parsing of the csv because that is irrelevant to our metrics.
     struct timeb t;
@@ -43,6 +43,7 @@ int main(int argc, char** argv){
         return 4;
     }
     init_heapfile(heap, atoi(argv[3]), heap_file);
+    heap->slot_size = record_size;
 
     //Initialize first page.
     PageID page_id = alloc_page(heap);
@@ -74,6 +75,6 @@ int main(int argc, char** argv){
     ftime(&t);
     long end_ms = t.time * 1000 + t.millitm;
     printf("TIME: %lu\n", end_ms - start_ms);
-    
+
     return 0;
 }

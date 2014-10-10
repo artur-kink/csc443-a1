@@ -1,25 +1,33 @@
-#include <sys/stat.h>
-#include <unistd.h>
-#include <sys/timeb.h>
-
+#include "library.h"
 #include "csvhelper.h"
 
-int main(int argc, char** argv) {
-    if (argc != 4) {
-        fprintf(stderr, "Usage: %s <csv_file> <colstore_name> <page_size>\n", argv[0]);
+#include <sys/stat.h>
+#include <sys/timeb.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write, int record_id_to_write);
+
+/**
+ * Takes a csv file and converts it to a heap file with given page sizes.
+ */
+int main(int argc, char** argv){
+    //Make sure all args are provided.
+    if(argc != 4){
+        fprintf(stderr, "Usage: %s <csv_file> <heapfile> <page_size>\n", argv[0]);
         return 1;
     }
 
-    // read records from CSV file
-    char* csv_file = argv[1];
+    //Load records from csv.
     std::vector<Record*> records;
-    int error = read_records(csv_file, &records);
+    int error = read_records(argv[1], &records);
     if (error) {
-        fprintf(stderr, "Could not read records from file: %s\n", csv_file);
+        fprintf(stderr, "Could not read records from file: %s\n", argv[1]);
         return 2;
     }
-    if (records.size() == 0) {
-        fprintf(stderr, "No records contained in file: %s\n", csv_file);
+
+    if(records.size() == 0){
+        fprintf(stderr, "No records in file: %s\n", argv[1]);
         return 3;
     }
 
@@ -34,42 +42,63 @@ int main(int argc, char** argv) {
         }
     }
 
-    // open all the attribute files for the column store
-    FILE* attr_files[num_attributes];
-    char attr_file_name[100];
-    for (int i = 0; i < num_attributes; i++) {
-        printf("filename: %s/%d\n", colstore_name, i);
-        if (sprintf(attr_file_name, "%s/%d", colstore_name, i) < 0)  {
-            fprintf(stderr, "Could not create attribute filename %s/%d\n", colstore_name, i);
-            return 5;
-        }
-
-        printf("opening file %s\n", attr_file_name);
-
-        FILE* attr_file = fopen(attr_file_name, "w+b");
-        if (!attr_file) {
-            fprintf(stderr, "Could not open attribute file for writing %s\n", attr_file_name);
-        }
-
-        attr_files[i] = attr_file;
-    }
-
     //Record start time of program.
+    //We do not include parsing of the csv because that is irrelevant to our metrics.
     struct timeb t;
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
 
-    // run through the records and flush each attribute to its corresponding
-    // file in the column store directory
-    for (int i = 0; i < records.size(); i++) {
-        Record* record = records[i];
-        for (int j = 0; j < num_attributes; j++) {
-            V attr_value = (*record)[j];
-            FILE* attr_file = attr_files[j];
 
-            fwrite(&i, sizeof(int), 1, attr_file);
-            fwrite(attr_value, sizeof(char), attribute_len, attr_file);
+    Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
+
+    for (int j = 0; j < num_attributes; j++) {
+
+        char path[100] = "";
+        sprintf(path, "%s/%d", argv[2], j);
+
+        //Open heap file where heap is stored.
+        FILE* heap_file = fopen(path, "w+b");
+        if(!heap_file){
+            printf("Failed to open heap file to write to: %s\n", path);
+            fclose(heap_file);
+            free(heap);
+            return 4;
         }
+
+        init_heapfile(heap, atoi(argv[3]), heap_file);
+        heap->slot_size = 2 * attribute_len;
+        //Initialize first page.
+        PageID page_id = alloc_page(heap);
+        Page* page = (Page*)malloc(sizeof(Page));
+        read_page(heap, page_id, page);
+
+        //Loop all records and add them to heap.
+        for(int i = 0; i < records.size(); i++){
+            printf("Record %d, %d: %s\n", i, j, records.at(i)->at(j));
+            // print_record(records.at(i));
+
+            //If page is full, create new page in heap.
+            if(add_fixed_len_page_colstore(page, records.at(i), j, i) == -1){
+
+                printf("allocating new page\n");
+                //Write page back to heap.
+                write_page(page, heap, page_id);
+
+                //Alloc new page and add record to it.
+                page_id = alloc_page(heap);
+                read_page(heap, page_id, page);
+                add_fixed_len_page_colstore(page, records.at(i), j, i);
+
+            }
+
+//            Record r;
+//            read_fixed_len_page(page, i % 8, &r);
+//            printf("Result\n");
+//            print_record(&r);
+        }
+
+        //Write our final page to heap.
+        write_page(page, heap, page_id);
     }
 
     //Calculate program end time.
@@ -77,10 +106,44 @@ int main(int argc, char** argv) {
     long end_ms = t.time * 1000 + t.millitm;
     printf("TIME: %lu\n", end_ms - start_ms);
 
-    // close all our files
-    for (int i = 0; i < num_attributes; i++) {
-        fclose(attr_files[i]);
+    return 0;
+}
+
+int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write, int record_id_to_write) {
+    unsigned char* directory_offset = get_directory(page);
+
+    //Iterate slots directory to find a free one.
+    for(int i = 0; i < fixed_len_page_capacity(page); i++){
+        if(i > 0 && i%8 == 0)
+            directory_offset++;
+
+        unsigned char directory = *directory_offset;
+
+        if(directory >> (i%8) == 0) {
+            Record to_write;
+
+            char index[attribute_len];
+            sprintf(index, "%0*d", attribute_len, record_id_to_write);
+            to_write.push_back(index);
+            to_write.push_back(r->at(attribute_id_to_write));
+
+            //Write record to page.
+            //fixed_len_write(&to_write, ((char*)page->data) + i*page->slot_size);
+
+            char* buf = ((char*)page->data) + i*page->slot_size;
+
+            // It was looping too many times so I tried this.
+            for (int k = 0; k < 2; k++) {
+                 memcpy((buf + k*attribute_len), (&to_write)->at(k), attribute_len);
+            }
+
+            //Update directory.
+            directory |= 1 << (i%8);
+            memcpy(directory_offset, &directory, 1);
+            return i;
+        }
     }
 
-    return 0;
+    //Reached here means we didn't find any free slots.
+    return -1;
 }

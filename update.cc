@@ -36,6 +36,7 @@ int main(int argc, char** argv) {
 
     // initialize our heapfile; not using init_heapfile to avoid zeroing
     // out the directory
+    heap->slot_size = record_size;
     heap->page_size = page_size;
     heap->file_ptr = heap_file;
 
