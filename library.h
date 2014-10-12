@@ -143,6 +143,11 @@ int number_of_slots_in_heap_directory(int page_size);
 void init_heapfile(Heapfile *heapfile, int page_size, FILE *file);
 
 /**
+ * Opens a heapfile with a given page size and slot size at path.
+ */
+int open_heapfile(Heapfile *heap, char *path, int page_size, int slot_size);
+
+/**
  * Allocate another page in the heapfile.  This grows the file by a page.
  */
 PageID alloc_page(Heapfile *heapfile);

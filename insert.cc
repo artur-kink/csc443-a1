@@ -23,19 +23,9 @@ int main(int argc, char** argv){
     }
 
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
-    FILE* heap_file = fopen(argv[1], "r+b");
-    if (!heap_file) {
-        fprintf(stderr, "Failed to open heap file: %s\n", argv[1]);
-        fclose(heap_file);
-        free(heap);
+    if (open_heapfile(heap, argv[1], atoi(argv[3]), record_size) != 0) {
         return 4;
     }
-
-    //init_heapfile(heap, atoi(argv[3]), heap_file);
-
-    heap->page_size = atoi(argv[3]);
-    heap->slot_size = record_size;
-    heap->file_ptr = heap_file;
 
     Page* page = (Page*)malloc(sizeof(Page*));
     Page* directory_page = (Page*)malloc(sizeof(Page*));
@@ -73,7 +63,7 @@ int main(int argc, char** argv){
     free(page);
     free(directory_page);
 
-    fclose(heap_file);
+    fclose(heap->file_ptr);
     free(heap);
 
     return 0;

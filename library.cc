@@ -148,6 +148,20 @@ PageID last_pid_of_directory(int directory_id, int page_size) {
     return number_of_pages_in_heap_directory(page_size) * (directory_id + 1);
 }
 
+int open_heapfile(Heapfile *heap, char *path, int page_size, int slot_size) {
+    FILE* heap_file = fopen(path, "rb");
+    if(!heap_file){
+        fprintf(stderr, "Failed to open heap file: %s\n", path);
+        free(heap);
+        fclose(heap_file);
+        return 2;
+    }
+    heap->page_size = page_size;
+    heap->slot_size = slot_size;
+    heap->file_ptr = heap_file;
+    return 0;
+}
+
 void init_heapfile(Heapfile *heapfile, int page_size, FILE *file) {
     int number_of_pages_in_heap = number_of_pages_in_heap_directory(page_size);
 

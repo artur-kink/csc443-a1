@@ -11,17 +11,9 @@ int main(int argc, char** argv){
     }
 
     Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
-    FILE* heap_file = fopen(argv[1], "rb");
-    if(!heap_file){
-        fprintf(stderr, "Failed to open heap file: %s\n", argv[1]);
-        free(heap);
-        fclose(heap_file);
+    if (open_heapfile(heap, argv[1], atoi(argv[2]), record_size) != 0) {
         return 2;
     }
-
-    heap->page_size = atoi(argv[2]);
-    heap->slot_size = record_size;
-    heap->file_ptr = heap_file;
 
     RecordIterator* recordi = new RecordIterator(heap);
     while (recordi->hasNext()) {
@@ -29,10 +21,9 @@ int main(int argc, char** argv){
         print_record(&next_record);
     }
 
-    fclose(heap_file);
+    fclose(heap->file_ptr);
     free(heap);
     free(recordi);
-
 
     return 0;
 }
