@@ -2,6 +2,7 @@
 #include <sys/timeb.h>
 
 #include "library.h"
+#include "selecthelper.h"
 
 int main(int argc, char** argv) {
     //Check for all arguments.
@@ -18,14 +19,7 @@ int main(int argc, char** argv) {
 
     //Open attribute file.
     char path[100] = "";
-    strcat(path, argv[1]);
-    strcat(path, "/");
-    strcat(path, argv[2]);
-    FILE* attr_file = fopen(path, "r+b");
-    if (!attr_file) {
-        fprintf(stderr, "Failed to open attribute file: %s\n", path);
-        return 3;
-    }
+    build_path(path, argv[1], argv[2]);
 
     //
     //Record Start Time
@@ -33,46 +27,38 @@ int main(int argc, char** argv) {
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
 
-    //Initialize heap and record iterator from file.
-    Heapfile* heap = (Heapfile*) malloc(sizeof (Heapfile));
-    heap->page_size = atoi(argv[6]);
-    heap->slot_size = 2*attribute_len;
-    heap->file_ptr = attr_file;
+    Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
+    if (open_heapfile(heap, path, atoi(argv[6]), 2*attribute_len) != 0) {
+        return 2;
+    }
+
     RecordIterator* recordi = new RecordIterator(heap);
 
     //Find all records matching query.
     std::vector<int> matching_records;
     int number_of_records_matching_query = 0;
     int total_number_of_records = 0;
+    char attr[attribute_len+1];
     while (recordi->hasNext()) {
         Record next_record = recordi->next();
 
-        char attr[attribute_len+1];
-        strncpy(attr, next_record.at(1), attribute_len);
-        attr[attribute_len] = '\0';
-
         //Check if attribute in selection range.
-        if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
+        if (compare_record(next_record.at(1), start, end) == 0){
             matching_records.push_back(atoi(next_record.at(0)));
             number_of_records_matching_query++;
         }
         total_number_of_records++;
     }
-    fclose(attr_file);
+    fclose(heap->file_ptr);
     //Close the other heap and open this one. Get the matching records.
 
     //Open return attribute file.
     char second_path[100] = "";
-    strcat(second_path, argv[1]);
-    strcat(second_path, "/");
-    strcat(second_path, argv[3]);
+    build_path(second_path, argv[1], argv[3]);
 
-    attr_file = fopen(second_path, "r+b");
-    if (!attr_file) {
-        fprintf(stderr, "Failed to open return attribute file: %s\n", second_path);
-        return 3;
+    if (open_heapfile(heap, second_path, atoi(argv[6]), 2*attribute_len) != 0) {
+        return 2;
     }
-    heap->file_ptr = attr_file;
 
     // read in the page to update
     Page* page = (Page*)malloc(sizeof(Page));
@@ -110,7 +96,7 @@ int main(int argc, char** argv) {
     printf("TOTAL NUMBER OF RECORDS : %d\n", total_number_of_records);
     printf("TOTAL NUMBER OF RECORDS SELECTED: %d\n", number_of_records_matching_query);
 
-    fclose(attr_file);
+    fclose(heap->file_ptr);
     free(heap);
     free(recordi);
     return 0;

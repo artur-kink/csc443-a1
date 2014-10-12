@@ -2,6 +2,7 @@
 #include <sys/timeb.h>
 
 #include "library.h"
+#include "selecthelper.h"
 
 int main(int argc, char** argv) {
     //Check for all arguments.
@@ -17,26 +18,18 @@ int main(int argc, char** argv) {
 
     //Open attribute file.
     char path[100] = "";
-    strcat(path, argv[1]);
-    strcat(path, "/");
-    strcat(path, argv[2]);
-    FILE* attr_file = fopen(path, "r+b");
-    if (!attr_file) {
-        fprintf(stderr, "Failed to open attribute file: %s\n", path);
-        return 3;
-    }
+    build_path(path, argv[1], argv[2]);
 
-    //
     //Record Start Time
     struct timeb t;
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
 
-    //Initialize heap and record iterator from file.
-    Heapfile* heap = (Heapfile*) malloc(sizeof (Heapfile));
-    heap->page_size = atoi(argv[5]);
-    heap->slot_size = 2*attribute_len;
-    heap->file_ptr = attr_file;
+    Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
+    if (open_heapfile(heap, path, atoi(argv[5]), 2*attribute_len) != 0) {
+        return 2;
+    }
+
     RecordIterator* recordi = new RecordIterator(heap);
 
     //Find all records matching query.
@@ -45,13 +38,9 @@ int main(int argc, char** argv) {
     while (recordi->hasNext()) {
         Record next_record = recordi->next();
 
-        char attr[attribute_len+1];
-        strncpy(attr, next_record.at(1), attribute_len);
-        attr[attribute_len] = '\0';
-
         //Check if attribute in selection range.
-        if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
-            printf("%.5s\n", attr);
+        if (compare_record(next_record.at(1), start, end) == 0){
+            printf("%.5s\n", next_record.at(1));
             number_of_records_matching_query++;
         }
         total_number_of_records++;
@@ -66,7 +55,7 @@ int main(int argc, char** argv) {
     printf("TOTAL NUMBER OF RECORDS : %d\n", total_number_of_records);
     printf("TOTAL NUMBER OF RECORDS SELECTED: %d\n", number_of_records_matching_query);
 
-    fclose(attr_file);
+    fclose(heap->file_ptr);
     free(heap);
     free(recordi);
     return 0;

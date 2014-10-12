@@ -1,5 +1,6 @@
 #include "library.h"
 #include "csvhelper.h"
+#include "selecthelper.h"
 
 #include <string.h>
 #include <sys/timeb.h>
@@ -20,23 +21,16 @@ int main(int argc, char** argv) {
     char* start = argv[3];
     char* end = argv[4];
 
-    //Open heap file.
-    FILE* heap_file = fopen(argv[1], "rb");
-    if (!heap_file) {
-        fprintf(stderr, "Failed to open heap file: %s\n", argv[1]);
-        return 2;
-    }
-
     //Record Start Time
     struct timeb t;
     ftime(&t);
     long start_ms = t.time * 1000 + t.millitm;
 
-    //Initialize heap and record iterator from file.
-    Heapfile* heap = (Heapfile*) malloc(sizeof (Heapfile));
-    heap->page_size = atoi(argv[5]);
-    heap->slot_size = record_size;
-    heap->file_ptr = heap_file;
+    Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
+    if (open_heapfile(heap, argv[1], atoi(argv[5]), record_size) != 0) {
+        return 2;
+    }
+
     RecordIterator* recordi = new RecordIterator(heap);
 
     //Find all records matching query.
@@ -46,12 +40,8 @@ int main(int argc, char** argv) {
         Record next_record = recordi->next();
 
         //Check if attribute in selection range.
-        char attr[attribute_len+1];
-        strncpy(attr, next_record.at(attribute_id), attribute_len);
-        attr[attribute_len] = '\0';
-
-        if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
-            printf("%.5s\n", attr);
+        if (compare_record(next_record.at(attribute_id), start, end) == 0){
+            printf("%.5s\n", next_record.at(attribute_id));
             number_of_records_matching_query++;
         }
         total_number_of_records++;
@@ -66,7 +56,7 @@ int main(int argc, char** argv) {
     printf("TOTAL NUMBER OF RECORDS : %d\n", total_number_of_records);
     printf("TOTAL NUMBER OF RECORDS SELECTED: %d\n", number_of_records_matching_query);
 
-    fclose(heap_file);
+    fclose(heap->file_ptr);
     free(heap);
     free(recordi);
     return 0;

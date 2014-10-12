@@ -9,33 +9,20 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // open file from first argument
-    Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
-    FILE* heap_file = fopen(argv[1], "r+b");
-    if (!heap_file) {
-        fprintf(stderr, "Failed to open heap file: %s\n", argv[1]);
-        fclose(heap_file);
-        free(heap);
-        return 2;
-    }
-
     // read in the record id
     int pid;
     int slot = parse_record_id(argv[2], &pid);
     if (slot == -1) {
         fprintf(stderr, "Invalid record id: %s\n", argv[2]);
-        fclose(heap_file);
-        free(heap);
         return 3;
     }
 
-    // read page size
     int page_size = atoi(argv[3]);
 
-    // initialize our heapfile
-    heap->page_size = page_size;
-    heap->slot_size = record_size;
-    heap->file_ptr = heap_file;
+    Heapfile* heap = (Heapfile*)malloc(sizeof(Heapfile));
+    if (open_heapfile(heap, argv[1], page_size, record_size) != 0) {
+        return 2;
+    }
 
     // initialize the page we'll be reading and writing to
     Page* page = (Page*)malloc(sizeof(Page));
@@ -44,7 +31,7 @@ int main(int argc, char** argv) {
     if (try_read_page(heap, pid, page) == -1) {
         fprintf(stderr, "Page id out of bounds: %d\n", pid);
         free(page);
-        fclose(heap_file);
+        fclose(heap->file_ptr);
         free(heap);
         return 4;
     }
@@ -61,7 +48,7 @@ int main(int argc, char** argv) {
     write_page(page, heap, pid);
 
     // and free all our stuff
-    fclose(heap_file);
+    fclose(heap->file_ptr);
     free(page);
     free(heap);
 
