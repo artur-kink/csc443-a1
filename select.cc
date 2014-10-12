@@ -1,5 +1,6 @@
 #include "library.h"
 #include "csvhelper.h"
+#include "selecthelper.h"
 
 #include <string.h>
 #include <sys/timeb.h>
@@ -35,15 +36,12 @@ int main(int argc, char** argv) {
     //Find all records matching query.
     int number_of_records_matching_query = 0;
     int total_number_of_records = 0;
+    char attr[attribute_len+1];
     while (recordi->hasNext()) {
         Record next_record = recordi->next();
 
         //Check if attribute in selection range.
-        char attr[attribute_len+1];
-        strncpy(attr, next_record.at(attribute_id), attribute_len);
-        attr[attribute_len] = '\0';
-
-        if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
+        if (compare_record(attr, next_record.at(attribute_id), start, end) == 0){
             printf("%.5s\n", attr);
             number_of_records_matching_query++;
         }

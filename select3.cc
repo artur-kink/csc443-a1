@@ -2,6 +2,7 @@
 #include <sys/timeb.h>
 
 #include "library.h"
+#include "selecthelper.h"
 
 int main(int argc, char** argv) {
     //Check for all arguments.
@@ -18,9 +19,7 @@ int main(int argc, char** argv) {
 
     //Open attribute file.
     char path[100] = "";
-    strcat(path, argv[1]);
-    strcat(path, "/");
-    strcat(path, argv[2]);
+    build_path(path, argv[1], argv[2]);
 
     //
     //Record Start Time
@@ -39,15 +38,12 @@ int main(int argc, char** argv) {
     std::vector<int> matching_records;
     int number_of_records_matching_query = 0;
     int total_number_of_records = 0;
+    char attr[attribute_len+1];
     while (recordi->hasNext()) {
         Record next_record = recordi->next();
 
-        char attr[attribute_len+1];
-        strncpy(attr, next_record.at(1), attribute_len);
-        attr[attribute_len] = '\0';
-
         //Check if attribute in selection range.
-        if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
+        if (compare_record(attr, next_record.at(1), start, end) == 0){
             matching_records.push_back(atoi(next_record.at(0)));
             number_of_records_matching_query++;
         }
@@ -58,9 +54,7 @@ int main(int argc, char** argv) {
 
     //Open return attribute file.
     char second_path[100] = "";
-    strcat(second_path, argv[1]);
-    strcat(second_path, "/");
-    strcat(second_path, argv[3]);
+    build_path(second_path, argv[1], argv[3]);
 
     if (open_heapfile(heap, second_path, atoi(argv[6]), 2*attribute_len) != 0) {
         return 2;

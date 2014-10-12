@@ -14,6 +14,11 @@ csvhelper.o: csvhelper.cc csvhelper.h
 
 csvhelper: csvhelper.o
 
+selecthelper.o: selecthelper.cc selecthelper.h library.h
+	$(CC) -o $@ -c $<
+
+selecthelper: selecthelper.o
+
 write_fixed_len_pages: write_fixed_len_pages.cc library.o csvhelper.o
 	$(CC) -o $@ $< library.o csvhelper.o
 	
@@ -35,17 +40,17 @@ update: update.cc library.o csvhelper.o
 delete: delete.cc library.o csvhelper.o
 	$(CC) -o $@ $< library.o csvhelper.o
 
-select: select.cc library.o csvhelper.o
-	$(CC) -o $@ $< library.o csvhelper.o
+select: select.cc library.o csvhelper.o selecthelper.o
+	$(CC) -o $@ $< library.o csvhelper.o selecthelper.o
 
 csv2colstore: csv2colstore.cc library.o csvhelper.o
 	$(CC) -o $@ $< library.o csvhelper.o
 
-select2: select2.cc library.o
-	$(CC) -o $@ $< library.o
+select2: select2.cc library.o selecthelper.o
+	$(CC) -o $@ $< library.o selecthelper.o
 
-select3: select3.cc library.o
-	$(CC) -o $@ $< library.o
+select3: select3.cc library.o selecthelper.o
+	$(CC) -o $@ $< library.o selecthelper.o
 
 clean:
 	$(RM) -vf *.o
