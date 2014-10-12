@@ -26,3 +26,16 @@
 *.exe
 *.out
 *.app
+
+# Compiled programs
+csv2colstore
+csv2heapfile
+delete
+insert
+read_fixed_len_page
+scan
+select
+select2
+select3
+update
+write_fixed_len_pages
