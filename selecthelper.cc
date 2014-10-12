@@ -3,12 +3,9 @@
 
 #include "library.h"
 
-int compare_record(char* attr, const char* record_data, char* start, char* end){
-    strncpy(attr, record_data, attribute_len);
-    attr[attribute_len] = '\0';
-
+int compare_record(const char* record_data, char* start, char* end){
     //Check if attribute in selection range.
-    if(strcmp(attr, start) >= 0 && strcmp(attr, end) <= 0){
+    if(strncmp(record_data, start, 5) >= 0 && strncmp(record_data, end, 5) <= 0){
         return 0;
     }
     return 1;

@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
         Record next_record = recordi->next();
 
         //Check if attribute in selection range.
-        if (compare_record(attr, next_record.at(1), start, end) == 0){
+        if (compare_record(next_record.at(1), start, end) == 0){
             matching_records.push_back(atoi(next_record.at(0)));
             number_of_records_matching_query++;
         }
