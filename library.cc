@@ -232,7 +232,6 @@ PageID alloc_page(Heapfile *heapfile, Page* dir_page, PageID current_page_id) {
             last_heap_pid = last_pid_of_directory(current_heap_id, heapfile->page_size);
 
             if (next_directory_heap_file_id > 0) {
-                printf("reading next directory page\n");
                 
                 // seek to the correct spot.
                 // Number of directories we are seeking is correct since we incremented
@@ -243,7 +242,6 @@ PageID alloc_page(Heapfile *heapfile, Page* dir_page, PageID current_page_id) {
                 next_directory_heap_file_id = (int)*dp_data;
                 dp_data += sizeof(int);
             } else {
-                printf("Creating new directory page\n");
                 // We must create a new directory page and
                 // write the id of the new one to the old one.
                 

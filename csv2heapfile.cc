@@ -69,7 +69,6 @@ int main(int argc, char** argv){
 
             //Alloc new page and add record to it.
             page_id = alloc_page(heap, dir_page, page_id);
-            printf("allocated at pid %d\n", page_id);
 //            page_id = alloc_page(heap);
             read_page(heap, page_id, page);
             add_fixed_len_page(page, records.at(i));
