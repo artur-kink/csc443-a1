@@ -45,10 +45,16 @@ int main(int argc, char** argv){
     init_heapfile(heap, atoi(argv[3]), heap_file);
     heap->slot_size = record_size;
 
-    //Initialize first page.
+    //Initialize first page + directory
     PageID page_id = alloc_page(heap);
     Page* page = (Page*)malloc(sizeof(Page));
     read_page(heap, page_id, page);
+    
+    Page* dir_page = (Page*)malloc(sizeof(Page));
+    read_directory_page(heap, heap_id_of_page(page_id, heap->page_size), dir_page);
+    
+    // don't read over the zeroth page again
+    page_id = 1;
 
     //Loop all records and add them to heap.
     for(int i = 0; i < records.size(); i++){
@@ -62,7 +68,9 @@ int main(int argc, char** argv){
             write_page(page, heap, page_id);
 
             //Alloc new page and add record to it.
-            page_id = alloc_page(heap);
+            page_id = alloc_page(heap, dir_page, page_id);
+            printf("allocated at pid %d\n", page_id);
+//            page_id = alloc_page(heap);
             read_page(heap, page_id, page);
             add_fixed_len_page(page, records.at(i));
         }
