@@ -18,7 +18,7 @@ int main(int argc, char** argv){
     RecordIterator* recordi = new RecordIterator(heap);
     while (recordi->hasNext()) {
         Record next_record = recordi->next();
-        print_record(&next_record);
+        recordi->printRecords(&next_record);
     }
 
     fclose(heap->file_ptr);

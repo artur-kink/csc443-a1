@@ -150,6 +150,12 @@ int open_heapfile(Heapfile *heap, char *path, int page_size, int slot_size);
 /**
  * Allocate another page in the heapfile.  This grows the file by a page.
  */
+PageID alloc_page(Heapfile *heapfile, Page* dir_page, int current_page_id);
+
+/**
+ * Allocate another page in the heapfile, scanning from the beginning of the
+ * file.  This grows the file by a page.
+ */
 PageID alloc_page(Heapfile *heapfile);
 
 /**
@@ -186,6 +192,12 @@ int try_read_page(Heapfile *heapfile, PageID pid, Page *page);
  * Read a directory page into memory
  */
 void read_directory_page(Heapfile *heapfile, PageID directory_id, Page *page);
+
+/**
+ * Write a directory page to disk
+ */
+void write_directory_page(Heapfile *heapfile, PageID directory_id, Page *dir_page);
+
 /**
  * Write a page from memory to disk
  */
@@ -225,6 +237,7 @@ public:
     RecordIterator(Heapfile *heapfile);
     Record next();
     bool hasNext();
+    void printRecords(Record *record);
 
     ~RecordIterator();
 };
