@@ -237,6 +237,7 @@ public:
     RecordIterator(Heapfile *heapfile);
     Record next();
     bool hasNext();
+    void printRecordId();
 
     ~RecordIterator();
 };
