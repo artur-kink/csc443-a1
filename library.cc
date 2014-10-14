@@ -296,8 +296,6 @@ PageID alloc_page(Heapfile *heapfile) {
 
     while (current_page_id < last_heap_pid) {
 
-//        printf("examining pid %d\n", current_page_id);
-
         // Read in current page info for that slot
         fread(&current_page_id, sizeof(int), 1, heapfile->file_ptr);
         fread(&free_space, sizeof(int), 1, heapfile->file_ptr);
