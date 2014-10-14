@@ -14,7 +14,7 @@ int add_fixed_len_page_colstore(Page *page, Record *r, int attribute_id_to_write
 int main(int argc, char** argv){
     //Make sure all args are provided.
     if(argc != 4){
-        fprintf(stderr, "Usage: %s <csv_file> <heapfile> <page_size>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <csv_file> <colstore_dir> <page_size>\n", argv[0]);
         return 1;
     }
 
@@ -67,10 +67,14 @@ int main(int argc, char** argv){
 
         init_heapfile(heap, atoi(argv[3]), heap_file);
         heap->slot_size = 2 * attribute_len;
+
         //Initialize first page.
         PageID page_id = alloc_page(heap);
         Page* page = (Page*)malloc(sizeof(Page));
         read_page(heap, page_id, page);
+
+        Page* dir_page = (Page*)malloc(sizeof(Page));
+        read_directory_page(heap, 0, dir_page);
 
         //Loop all records and add them to heap.
         for(int i = 0; i < records.size(); i++){
@@ -79,16 +83,18 @@ int main(int argc, char** argv){
 
             //If page is full, create new page in heap.
             if(add_fixed_len_page_colstore(page, records.at(i), j, i) == -1){
-
-                printf("allocating new page\n");
+                
+                if (page_id == 0) {
+                    page_id == 1;
+                }
+                
                 //Write page back to heap.
                 write_page(page, heap, page_id);
 
                 //Alloc new page and add record to it.
-                page_id = alloc_page(heap);
+                page_id = alloc_page(heap, dir_page, page_id);
                 read_page(heap, page_id, page);
                 add_fixed_len_page_colstore(page, records.at(i), j, i);
-
             }
 
 //            Record r;

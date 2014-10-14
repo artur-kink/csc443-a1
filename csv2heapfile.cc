@@ -64,8 +64,9 @@ int main(int argc, char** argv){
             //Write page back to heap.
             write_page(page, heap, page_id);
             
-            
             // don't read over the zeroth page again
+            // because until we write to disk it will still seem like it has
+            // free space
             if (page_id == 0) {
                 page_id = 1;
             }
