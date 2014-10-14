@@ -499,8 +499,14 @@ Record RecordIterator::next() {
     return record;
 }
 
-void RecordIterator::printRecordId() {
-    printf("%d%.5d\n", this->current_page_id, this->current_slot);
+void RecordIterator::printRecords(Record *record) {
+    //Iterate all records and print the 10 bytes as characters.
+    for(int i = 0; i < record->size()-1; i++){
+        printf("Record %d%.5d: %.10s,\n", this->current_page_id, i, record->at(i));
+    }
+    //Print the last variable with no trailing comma.
+    printf("Record %d%.5ld: %.10s\n", this->current_page_id, record->size() - 1, record->at(record->size()-1));
+
 }
 
 bool RecordIterator::hasNext() {
