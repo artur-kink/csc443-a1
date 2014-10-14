@@ -53,9 +53,6 @@ int main(int argc, char** argv){
     Page* dir_page = (Page*)malloc(sizeof(Page));
     read_directory_page(heap, heap_id_of_page(page_id, heap->page_size), dir_page);
     
-    // don't read over the zeroth page again
-    page_id = 1;
-
     //Loop all records and add them to heap.
     for(int i = 0; i < records.size(); i++){
         printf("Record %d: ", i);
@@ -66,6 +63,12 @@ int main(int argc, char** argv){
 
             //Write page back to heap.
             write_page(page, heap, page_id);
+            
+            
+            // don't read over the zeroth page again
+            if (page_id == 0) {
+                page_id = 1;
+            }
 
             //Alloc new page and add record to it.
             page_id = alloc_page(heap, dir_page, page_id);
