@@ -73,9 +73,6 @@ int main(int argc, char** argv){
         Page* page = (Page*)malloc(sizeof(Page));
         read_page(heap, page_id, page);
 
-        Page* dir_page = (Page*)malloc(sizeof(Page));
-        read_directory_page(heap, 0, dir_page);
-
         //Loop all records and add them to heap.
         for(int i = 0; i < records.size(); i++){
             printf("Record %d, %d: %s\n", i, j, records.at(i)->at(j));
@@ -83,16 +80,11 @@ int main(int argc, char** argv){
 
             //If page is full, create new page in heap.
             if(add_fixed_len_page_colstore(page, records.at(i), j, i) == -1){
-                
-                if (page_id == 0) {
-                    page_id == 1;
-                }
-                
                 //Write page back to heap.
                 write_page(page, heap, page_id);
 
                 //Alloc new page and add record to it.
-                page_id = alloc_page(heap, dir_page, page_id);
+                page_id = alloc_page(heap);
                 read_page(heap, page_id, page);
                 add_fixed_len_page_colstore(page, records.at(i), j, i);
             }
